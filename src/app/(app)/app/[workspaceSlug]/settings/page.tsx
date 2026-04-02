@@ -1,7 +1,11 @@
 import { MemberRoleForm } from "@/components/workspaces/member-role-form";
 import { RoleBadge } from "@/components/workspaces/role-badge";
 import { WorkspaceSettingsForm } from "@/components/workspaces/workspace-settings-form";
+import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
+import { MetricCard } from "@/components/ui/metric-card";
+import { SettingsIcon, UserIcon } from "@/components/ui/icons";
 import { requireAuthenticatedUser } from "@/lib/auth";
 import {
   hasMinimumWorkspaceRole,
@@ -26,68 +30,110 @@ export default async function WorkspaceSettingsPage({
   const members = await listWorkspaceMembers(access.workspace.id, user.id);
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
-      <Card className="p-7">
-        <h2 className="text-2xl font-semibold tracking-tight text-slate-950">
-          Workspace settings
-        </h2>
-        <p className="mt-4 text-base leading-7 text-slate-600">
-          Update the stable workspace identity and configure defaults that later retrieval
-          and grounded-answer features will inherit.
-        </p>
-        <div className="mt-6">
-          <WorkspaceSettingsForm workspace={access.workspace} workspaceId={access.workspace.id} />
-        </div>
-      </Card>
+    <div className="grid gap-6">
+      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <MetricCard
+          icon={<SettingsIcon />}
+          label="Search mode"
+          note="Default retrieval posture stored on the workspace."
+          tone="tint"
+          value={access.workspace.settings.defaultSearchMode}
+        />
+        <MetricCard
+          icon={<UserIcon />}
+          label="Visibility"
+          note="Default audience for future conversation threads."
+          value={access.workspace.settings.defaultConversationVisibility}
+        />
+        <MetricCard
+          icon={<UserIcon />}
+          label="Members"
+          note="Collaborators currently attached to this tenant."
+          value={`${members.length}`}
+        />
+        <MetricCard
+          icon={<SettingsIcon />}
+          label="Citations"
+          note="Whether grounded answers should cite sources by default."
+          value={access.workspace.settings.citationsRequired ? "On" : "Off"}
+        />
+      </section>
 
-      <Card className="p-7">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <h2 className="text-2xl font-semibold tracking-tight text-slate-950">
-              Members and roles
-            </h2>
-            <p className="mt-3 text-base leading-7 text-slate-600">
-              Roles are enforced by RLS in the database and mirrored here with server-side
-              guards. Admins can manage viewers and editors. Owners have full control.
-            </p>
+      <section className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
+        <Card className="p-7 sm:p-8">
+          <h2 className="text-[var(--text-title)] leading-tight text-slate-950">
+            Workspace settings
+          </h2>
+          <p className="mt-4 text-base leading-7 text-slate-600">
+            Keep the workspace identity stable and make defaults explicit before retrieval and AI flows arrive.
+          </p>
+          <div className="mt-6">
+            <WorkspaceSettingsForm workspace={access.workspace} workspaceId={access.workspace.id} />
           </div>
-        </div>
+        </Card>
 
-        <div className="mt-6 grid gap-4">
-          {members.map((member) => (
-            <div
-              key={member.id}
-              className="rounded-[1.5rem] border border-[var(--app-border)] bg-white p-5"
-            >
-              <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                <div>
-                  <div className="flex flex-wrap items-center gap-3">
-                    <p className="text-lg font-semibold text-slate-950">
-                      {member.fullName ?? member.email ?? "Workspace member"}
-                    </p>
-                    <RoleBadge role={member.role} />
-                    {member.isCurrentUser && (
-                      <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold tracking-[0.12em] text-slate-600 uppercase">
-                        You
-                      </span>
+        <Card className="p-7 sm:p-8">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h2 className="text-[var(--text-title)] leading-tight text-slate-950">
+                Members and roles
+              </h2>
+              <p className="mt-3 text-base leading-7 text-slate-600">
+                RLS enforces this in the database; the UI mirrors that model without inventing extra permissions.
+              </p>
+            </div>
+            <Badge className="border-slate-300 bg-white text-slate-700">
+              {access.role} access
+            </Badge>
+          </div>
+
+          {members.length > 0 ? (
+            <div className="mt-6 grid gap-4">
+              {members.map((member) => (
+                <div
+                  key={member.id}
+                  className="rounded-[1.5rem] border border-[var(--app-border)] bg-white/84 p-5"
+                >
+                  <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                    <div>
+                      <div className="flex flex-wrap items-center gap-3">
+                        <p className="text-lg font-semibold text-slate-950">
+                          {member.fullName ?? member.email ?? "Workspace member"}
+                        </p>
+                        <RoleBadge role={member.role} />
+                        {member.isCurrentUser && (
+                          <Badge className="border-slate-300 bg-slate-50 text-slate-600">
+                            You
+                          </Badge>
+                        )}
+                      </div>
+                      <p className="mt-2 text-sm text-slate-600">{member.email ?? "No email"}</p>
+                    </div>
+
+                    {hasMinimumWorkspaceRole(access.role, "admin") && (
+                      <MemberRoleForm
+                        currentRole={access.role}
+                        member={member}
+                        workspaceId={access.workspace.id}
+                        workspaceSlug={access.workspace.slug}
+                      />
                     )}
                   </div>
-                  <p className="mt-2 text-sm text-slate-600">{member.email ?? "No email"}</p>
                 </div>
-
-                {hasMinimumWorkspaceRole(access.role, "admin") && (
-                  <MemberRoleForm
-                    currentRole={access.role}
-                    member={member}
-                    workspaceId={access.workspace.id}
-                    workspaceSlug={access.workspace.slug}
-                  />
-                )}
-              </div>
+              ))}
             </div>
-          ))}
-        </div>
-      </Card>
+          ) : (
+            <div className="mt-6">
+              <EmptyState
+                description="This workspace has no collaborators beyond the current owner path yet."
+                eyebrow="Members"
+                icon={<UserIcon />}
+                title="No collaborators are attached."
+              />
+            </div>
+          )}
+        </Card>
+      </section>
     </div>
   );
 }

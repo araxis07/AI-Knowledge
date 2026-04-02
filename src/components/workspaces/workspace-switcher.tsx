@@ -6,6 +6,7 @@ import { useMemo, useTransition } from "react";
 import { Select } from "@/components/ui/select";
 import type { WorkspaceSummary } from "@/lib/types/workspaces";
 import { asRoute } from "@/lib/utils/as-route";
+import { cn } from "@/lib/utils/cn";
 
 function buildWorkspaceDestination(pathname: string, nextSlug: string) {
   const segments = pathname.split("/");
@@ -23,7 +24,15 @@ function buildWorkspaceDestination(pathname: string, nextSlug: string) {
   return segments.join("/");
 }
 
-export function WorkspaceSwitcher({ workspaces }: { workspaces: WorkspaceSummary[] }) {
+export function WorkspaceSwitcher({
+  ariaLabel = "Switch workspace",
+  className,
+  workspaces,
+}: {
+  ariaLabel?: string;
+  className?: string;
+  workspaces: WorkspaceSummary[];
+}) {
   const pathname = usePathname();
   const router = useRouter();
   const [isPending, startNavigation] = useTransition();
@@ -39,8 +48,8 @@ export function WorkspaceSwitcher({ workspaces }: { workspaces: WorkspaceSummary
 
   return (
     <Select
-      aria-label="Switch workspace"
-      className="min-w-[13rem] bg-white/90"
+      aria-label={ariaLabel}
+      className={cn("min-w-[13rem] bg-white/90", className)}
       defaultValue={currentSlug || workspaces[0]?.slug}
       disabled={isPending}
       onChange={(event) => {

@@ -2,7 +2,6 @@ import { notFound, redirect } from "next/navigation";
 
 import { requireAuthenticatedUser } from "@/lib/auth";
 import type {
-  ProfileSummary,
   WorkspaceAccess,
   WorkspaceMemberSummary,
   WorkspaceRole,
@@ -11,6 +10,7 @@ import type {
 } from "@/lib/types/workspaces";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { asRoute } from "@/lib/utils/as-route";
+import { getDisplayName } from "@/lib/utils/display-name";
 import { workspaceSettingsSchema } from "@/lib/validation/workspace";
 
 const workspaceRoleRank: Record<WorkspaceRole, number> = {
@@ -232,14 +232,4 @@ export function getWorkspaceRoleCopy(role: WorkspaceRole): string {
   }
 }
 
-export function getDisplayName(profile: ProfileSummary | null, fallbackEmail?: string | null): string {
-  if (profile?.fullName) {
-    return profile.fullName;
-  }
-
-  if (fallbackEmail) {
-    return fallbackEmail;
-  }
-
-  return "Workspace user";
-}
+export { getDisplayName };
