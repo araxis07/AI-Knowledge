@@ -38,46 +38,46 @@ export default async function AccountPage() {
   return (
     <div className="grid gap-6">
       <PageHeader
-        description="Identity, access posture, and workspace coverage live here. This page stays intentionally lean until richer profile editing and account security flows are added."
-        eyebrow="Account"
+        description="See who is signed in and which workspaces you can enter or manage. This page stays focused on the essentials."
+        eyebrow="Profile"
         kicker={
           <>
             <Badge className="border-cyan-700/16 bg-cyan-700/8 text-cyan-900">
-              Authenticated via Supabase
+              Signed in with Supabase
             </Badge>
             <Badge className="border-slate-300 bg-white text-slate-700">
               Profile sync active
             </Badge>
           </>
         }
-        title={displayName}
+        title="Account and access"
       />
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <MetricCard
           icon={<SparkIcon />}
-          label="Workspace footprint"
+          label="Workspaces"
           note="Total workspaces visible from this account."
           tone="tint"
           value={`${workspaces.length}`}
         />
         <MetricCard
           icon={<SettingsIcon />}
-          label="Admin surfaces"
-          note="Workspaces where you can manage defaults or collaborators."
+          label="Can manage"
+          note="Workspaces where you can edit settings or collaborator roles."
           value={`${adminCount}`}
         />
         <MetricCard
           icon={<UserIcon />}
-          label="Ownership"
-          note="Workspaces owned directly by this profile."
+          label="Owned by you"
+          note="Workspaces where you are the owner."
           value={`${ownedCount}`}
         />
         <MetricCard
           icon={<ActivityIcon />}
-          label="Session posture"
-          note="Public auth flow wired, role guards enforced on the server."
-          value="Stable"
+          label="Session"
+          note="Server-side route guards and cookie-based auth are active."
+          value="Active"
         />
       </section>
 
@@ -90,7 +90,7 @@ export default async function AccountPage() {
 
             <div className="min-w-0">
               <p className="text-sm font-semibold tracking-[0.2em] text-teal-700 uppercase">
-                Profile snapshot
+                Signed in as
               </p>
               <h2 className="mt-3 text-[var(--text-title)] leading-tight text-slate-950">
                 {displayName}
@@ -103,7 +103,7 @@ export default async function AccountPage() {
                   Account surface ready
                 </Badge>
                 <Badge className="border-slate-300 bg-white text-slate-700">
-                  Editing deferred to later phase
+                  Editing tools come later
                 </Badge>
               </div>
             </div>
@@ -111,7 +111,7 @@ export default async function AccountPage() {
 
           <div className="mt-8 grid gap-4 sm:grid-cols-2">
             <div className="rounded-[1.5rem] border border-[var(--app-border)] bg-white/78 p-5">
-              <p className="text-sm font-medium text-slate-500">Auth user ID</p>
+              <p className="text-sm font-medium text-slate-500">User ID</p>
               <p className="mt-3 break-all font-[var(--font-mono)] text-sm text-slate-800">
                 {user.id}
               </p>
@@ -127,7 +127,7 @@ export default async function AccountPage() {
 
         <Card className="p-7 sm:p-8">
           <p className="text-sm font-semibold tracking-[0.2em] text-slate-500 uppercase">
-            Workspace access map
+            Workspace access
           </p>
           <div className="mt-5 grid gap-3">
             {workspaces.length > 0 ? (
@@ -153,7 +153,7 @@ export default async function AccountPage() {
           <div className="mt-6 rounded-[1.5rem] border border-[var(--app-border)] bg-[var(--app-panel-muted)] p-5">
             <div className="flex items-center gap-3 text-slate-900">
               <FileStackIcon />
-              <p className="font-medium">Next account-layer additions</p>
+              <p className="font-medium">Coming next</p>
             </div>
             <ul className="mt-4 grid gap-2 text-sm leading-6 text-slate-600">
               <li>Profile editing</li>

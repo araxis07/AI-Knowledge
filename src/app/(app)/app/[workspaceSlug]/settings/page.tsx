@@ -12,6 +12,11 @@ import {
   listWorkspaceMembers,
   requireWorkspaceAccess,
 } from "@/lib/workspaces";
+import {
+  formatConversationVisibilityLabel,
+  formatSearchModeLabel,
+  formatWorkspaceRoleLabel,
+} from "@/lib/utils/workspace-labels";
 
 type WorkspaceSettingsPageProps = {
   params: Promise<{
@@ -34,27 +39,29 @@ export default async function WorkspaceSettingsPage({
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <MetricCard
           icon={<SettingsIcon />}
-          label="Search mode"
-          note="Default retrieval posture stored on the workspace."
+          label="Search default"
+          note="How search behaves here by default."
           tone="tint"
-          value={access.workspace.settings.defaultSearchMode}
+          value={formatSearchModeLabel(access.workspace.settings.defaultSearchMode)}
         />
         <MetricCard
           icon={<UserIcon />}
-          label="Visibility"
-          note="Default audience for future conversation threads."
-          value={access.workspace.settings.defaultConversationVisibility}
+          label="Chat visibility"
+          note="Who can see new chats by default."
+          value={formatConversationVisibilityLabel(
+            access.workspace.settings.defaultConversationVisibility,
+          )}
         />
         <MetricCard
           icon={<UserIcon />}
           label="Members"
-          note="Collaborators currently attached to this tenant."
+          note="People currently attached to this workspace."
           value={`${members.length}`}
         />
         <MetricCard
           icon={<SettingsIcon />}
           label="Citations"
-          note="Whether grounded answers should cite sources by default."
+          note="Whether answers should cite sources by default."
           value={access.workspace.settings.citationsRequired ? "On" : "Off"}
         />
       </section>
@@ -65,7 +72,7 @@ export default async function WorkspaceSettingsPage({
             Workspace settings
           </h2>
           <p className="mt-4 text-base leading-7 text-slate-600">
-            Keep the workspace identity stable and make defaults explicit before retrieval and AI flows arrive.
+            Keep the workspace identity clear and choose sensible defaults for search, chats, and citations.
           </p>
           <div className="mt-6">
             <WorkspaceSettingsForm workspace={access.workspace} workspaceId={access.workspace.id} />
@@ -79,11 +86,11 @@ export default async function WorkspaceSettingsPage({
                 Members and roles
               </h2>
               <p className="mt-3 text-base leading-7 text-slate-600">
-                RLS enforces this in the database; the UI mirrors that model without inventing extra permissions.
+                Owners can manage everyone. Admins can manage editors and viewers. The database enforces the same rules.
               </p>
             </div>
             <Badge className="border-slate-300 bg-white text-slate-700">
-              {access.role} access
+              {formatWorkspaceRoleLabel(access.role)} access
             </Badge>
           </div>
 
@@ -125,10 +132,10 @@ export default async function WorkspaceSettingsPage({
           ) : (
             <div className="mt-6">
               <EmptyState
-                description="This workspace has no collaborators beyond the current owner path yet."
+                description="Only the current workspace owner is attached right now."
                 eyebrow="Members"
                 icon={<UserIcon />}
-                title="No collaborators are attached."
+                title="No collaborators have been added yet."
               />
             </div>
           )}

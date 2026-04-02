@@ -38,12 +38,12 @@ export function DocumentUploadPanel({ workspaceSlug }: { workspaceSlug: string }
     if (!response.ok) {
       setUploadedDocumentId(null);
       setMessage(null);
-      setError(payload.message ?? "Unable to upload this document right now.");
+      setError(payload.message ?? "We could not upload this file right now.");
       return;
     }
 
     setError(null);
-    setMessage(payload.message ?? "The document uploaded successfully.");
+    setMessage(payload.message ?? "The document was uploaded successfully.");
     setUploadedDocumentId(payload.documentId ?? null);
     setSelectedFile(null);
 
@@ -61,7 +61,7 @@ export function DocumentUploadPanel({ workspaceSlug }: { workspaceSlug: string }
         <div>
           <h2 className="text-xl font-semibold tracking-tight text-slate-950">Upload document</h2>
           <p className="mt-1 text-sm text-slate-600">
-            Store the original file in Supabase Storage and register it in the workspace library.
+            Add a source file to this workspace. We store the original file and track its status in the library.
           </p>
         </div>
       </div>
@@ -122,7 +122,7 @@ export function DocumentUploadPanel({ workspaceSlug }: { workspaceSlug: string }
                 <p>{formatBytes(selectedFile.size)}</p>
               </div>
             ) : (
-              <p>Select one file to upload into this workspace.</p>
+              <p>Choose one file to upload into this workspace.</p>
             )}
           </div>
           <Input
@@ -140,12 +140,12 @@ export function DocumentUploadPanel({ workspaceSlug }: { workspaceSlug: string }
 
         <div className="grid gap-2">
           <label className="text-sm font-medium text-slate-800" htmlFor="document-title">
-            Title override
+            Custom title
           </label>
           <Input
             id="document-title"
             name="title"
-            placeholder="Optional. Defaults to the filename."
+            placeholder="Optional. If left blank, we use the filename."
             type="text"
           />
         </div>
@@ -157,7 +157,7 @@ export function DocumentUploadPanel({ workspaceSlug }: { workspaceSlug: string }
           <Textarea
             id="document-description"
             name="description"
-            placeholder="Optional context for the library and future retrieval behavior."
+            placeholder="Optional. Add context so people know what this document is for."
           />
         </div>
 

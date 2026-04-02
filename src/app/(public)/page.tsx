@@ -40,7 +40,10 @@ export default async function HomePage() {
 
           <div className="mt-8 flex flex-wrap gap-3">
             <Link
-              className={buttonStyles({})}
+              className={buttonStyles({
+                className: "text-white",
+                variant: user ? "primary" : "accent",
+              })}
               href={asRoute(user ? "/app" : "/sign-up")}
             >
               {user ? "Open your workspaces" : "Create account"}

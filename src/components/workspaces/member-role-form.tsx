@@ -2,6 +2,7 @@ import { updateWorkspaceMemberRoleAction } from "@/app/actions/workspaces";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
 import type { WorkspaceMemberSummary, WorkspaceRole } from "@/lib/types/workspaces";
+import { formatWorkspaceRoleLabel } from "@/lib/utils/workspace-labels";
 
 type MemberRoleFormProps = {
   currentRole: WorkspaceRole;
@@ -40,15 +41,15 @@ export function MemberRoleForm({
         {options.length > 0 ? (
           options.map((roleOption) => (
             <option key={roleOption} value={roleOption}>
-              {roleOption}
+              {formatWorkspaceRoleLabel(roleOption)}
             </option>
           ))
         ) : (
-          <option value={member.role}>{member.role}</option>
+          <option value={member.role}>{formatWorkspaceRoleLabel(member.role)}</option>
         )}
       </Select>
       <Button disabled={isDisabled} size="sm" type="submit" variant="secondary">
-        Update
+        Save role
       </Button>
     </form>
   );

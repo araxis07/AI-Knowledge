@@ -87,7 +87,7 @@ export default async function DocumentDetailPage({
         }
         description={
           document.description ??
-          "This detail view is backed by the `documents` row plus the latest ingestion job and signed storage access."
+          "This page shows the file details, current status, and the latest processing information."
         }
         eyebrow="Document detail"
         kicker={
@@ -115,7 +115,7 @@ export default async function DocumentDetailPage({
                 Stored metadata
               </h2>
               <p className="mt-1 text-sm text-slate-600">
-                Database-backed attributes persisted at upload time.
+                Basic file details saved when the document was uploaded.
               </p>
             </div>
           </div>
@@ -184,8 +184,7 @@ export default async function DocumentDetailPage({
                 Processing foundation
               </h2>
               <p className="mt-1 text-sm text-slate-600">
-                Upload and reprocess actions create ingestion job rows that later phases can
-                consume.
+                Upload and reprocess actions create job records that the processing pipeline can pick up.
               </p>
             </div>
           </div>
@@ -216,7 +215,7 @@ export default async function DocumentDetailPage({
               <div className="rounded-[1.35rem] border border-[var(--app-border)] bg-[var(--app-panel-muted)] p-4">
                 <p className="text-sm font-semibold text-slate-950">Document actions</p>
                 <p className="mt-2 text-sm leading-6 text-slate-600">
-                  Archive stops active jobs. Delete removes both the storage object and database row.
+                  Archive stops active jobs. Delete removes the file from storage and the document row from the database.
                 </p>
                 <DocumentActionForms
                   allowDelete
@@ -237,8 +236,7 @@ export default async function DocumentDetailPage({
           Content preview
         </h2>
         <p className="mt-2 text-sm leading-6 text-slate-600">
-          Text-like files render a direct preview here. PDFs stay private in storage and open from
-          the signed original link above.
+          Text and Markdown files show a preview here. PDFs stay private and open from the signed link above.
         </p>
 
         {document.previewContent ? (
@@ -253,8 +251,8 @@ export default async function DocumentDetailPage({
         ) : (
           <div className="mt-6 rounded-[1.5rem] border border-[var(--app-border)] bg-[var(--app-panel-muted)] p-5 text-sm leading-7 text-slate-600">
             {document.kind === "pdf"
-              ? "PDF preview stays outside this page for now. Use the signed original link to open the uploaded file."
-              : "This document is too large for an inline preview in the current phase."}
+              ? "PDF preview is not shown inline yet. Use the signed original link to open the file."
+              : "This document is too large to preview inline right now."}
           </div>
         )}
       </Card>

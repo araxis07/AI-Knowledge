@@ -24,23 +24,23 @@ export function MetricCard({
         "p-5 sm:p-6",
         tone === "muted" && "bg-[var(--app-panel-muted)]",
         tone === "tint" &&
-          "bg-[linear-gradient(145deg,rgba(21,94,117,0.08),rgba(15,118,110,0.08),rgba(255,255,255,0.9))]",
+          "bg-[linear-gradient(145deg,rgba(19,78,99,0.08),rgba(15,118,110,0.1),rgba(255,255,255,0.96))]",
       )}
     >
       <div className="flex items-start justify-between gap-4">
         <div>
-          <p className="text-sm font-medium text-slate-500">{label}</p>
-          <p className="mt-3 text-3xl leading-none font-semibold tracking-tight text-slate-950">
+          <p className="text-sm font-semibold tracking-[0.02em] text-slate-600">{label}</p>
+          <p className="mt-3 text-[2.2rem] leading-none font-semibold tracking-tight text-slate-950">
             {value}
           </p>
         </div>
         {icon ? (
-          <div className="inline-flex size-11 items-center justify-center rounded-full border border-[var(--app-border)] bg-white/80 text-slate-700">
+          <div className="inline-flex size-11 items-center justify-center rounded-full border border-[var(--app-border)] bg-[var(--app-panel-muted)] text-slate-800">
             {icon}
           </div>
         ) : null}
       </div>
-      {note ? <p className="mt-4 text-sm leading-6 text-slate-600">{note}</p> : null}
+      {note ? <p className="mt-4 text-sm leading-6 text-[var(--app-foreground-soft)]">{note}</p> : null}
     </Card>
   );
 }

@@ -12,6 +12,7 @@ import type { ProfileSummary, WorkspaceSummary } from "@/lib/types/workspaces";
 import { asRoute } from "@/lib/utils/as-route";
 import { getDisplayName } from "@/lib/utils/display-name";
 import { cn } from "@/lib/utils/cn";
+import { formatWorkspaceRoleLabel } from "@/lib/utils/workspace-labels";
 import {
   ActivityIcon,
   ChatIcon,
@@ -48,34 +49,34 @@ function isActivePath(pathname: string, href: string) {
 function getShellContext(pathname: string, workspaceName?: string) {
   if (pathname === "/app") {
     return {
-      eyebrow: "Control center",
+      eyebrow: "Workspace hub",
       summary:
-        "Track tenant foundations, jump between workspaces, and keep the whole product surface coherent before search and ingestion land.",
-      title: "Workspace dashboard",
+        "Open a workspace, create a new one, and keep the next step obvious without digging through menus.",
+      title: "Start from a workspace, not from guesswork.",
     };
   }
 
   if (pathname === "/app/account") {
     return {
-      eyebrow: "Account profile",
+      eyebrow: "Profile",
       summary:
-        "Review identity, access posture, and workspace footprint from one quiet, high-signal surface.",
-      title: "Profile and account settings",
+        "See who is signed in, what you can access, and which workspaces you can manage.",
+      title: "Account and access",
     };
   }
 
   if (workspaceName) {
     return {
-      eyebrow: "Active workspace",
+      eyebrow: "Workspace",
       summary:
-        "This shell keeps role context, navigation, and operational defaults visible without turning the interface into a generic dashboard grid.",
+        "Documents, search, chats, activity, and settings all stay inside this one workspace so the flow stays easy to follow.",
       title: workspaceName,
     };
   }
 
   return {
-    eyebrow: "Product shell",
-    summary: "Core navigation and operational surfaces for the AI knowledge base.",
+    eyebrow: "AI knowledge base",
+    summary: "Core navigation and workspace surfaces for the product.",
     title: "AI Knowledge Base",
   };
 }
@@ -94,10 +95,10 @@ function NavLink({
   return (
     <Link
       className={cn(
-        "group flex items-center justify-between gap-4 rounded-[1.2rem] px-4 py-3 text-sm transition duration-200",
+        "group flex items-center justify-between gap-4 rounded-[1.25rem] border px-4 py-3 text-sm transition duration-200",
         isActive
-          ? "bg-white/12 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]"
-          : "text-slate-300 hover:bg-white/8 hover:text-white",
+          ? "border-white/14 bg-white/12 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]"
+          : "border-transparent text-slate-300 hover:border-white/10 hover:bg-white/6 hover:text-white",
       )}
       href={asRoute(href)}
       {...(isActive ? { "aria-current": "page" as const } : {})}
@@ -108,15 +109,15 @@ function NavLink({
           className={cn(
             "inline-flex size-9 items-center justify-center rounded-full border text-sm transition",
             isActive
-              ? "border-white/14 bg-white/10 text-white"
-              : "border-white/8 bg-white/4 text-slate-300 group-hover:border-white/14 group-hover:bg-white/8 group-hover:text-white",
+              ? "border-white/18 bg-white/12 text-white"
+              : "border-white/8 bg-white/4 text-slate-300 group-hover:border-white/14 group-hover:bg-white/10 group-hover:text-white",
           )}
         >
           {icon}
         </span>
         <span className="flex flex-col">
           <span className="font-medium">{label}</span>
-          {secondary ? <span className="text-xs text-slate-400">{secondary}</span> : null}
+          {secondary ? <span className="text-xs text-slate-400/95">{secondary}</span> : null}
         </span>
       </span>
       <span
@@ -151,14 +152,14 @@ export function AppShell({ children, profile, workspaces }: AppShellProps) {
     {
       href: "/app",
       icon: <HomeIcon />,
-      label: "Dashboard",
-      secondary: "Shell overview",
+      label: "Home",
+      secondary: "All workspaces",
     },
     {
       href: "/app/account",
       icon: <UserIcon />,
-      label: "Account",
-      secondary: "Profile and access",
+      label: "Profile",
+      secondary: "Account and access",
     },
   ];
 
@@ -168,31 +169,31 @@ export function AppShell({ children, profile, workspaces }: AppShellProps) {
           href: `/app/${currentWorkspace.slug}`,
           icon: <SparkIcon />,
           label: "Overview",
-          secondary: "Signal and posture",
+          secondary: "Start here",
         },
         {
           href: `/app/${currentWorkspace.slug}/search`,
           icon: <SearchIcon />,
-          label: "Search",
-          secondary: "Retrieval surface",
+          label: "Search & ask",
+          secondary: "Find answers",
         },
         {
           href: `/app/${currentWorkspace.slug}/documents`,
           icon: <FileStackIcon />,
-          label: "Documents",
-          secondary: "Corpus management",
+          label: "Document library",
+          secondary: "Files and status",
         },
         {
           href: `/app/${currentWorkspace.slug}/conversations`,
           icon: <ChatIcon />,
-          label: "Conversations",
-          secondary: "Grounded answer threads",
+          label: "Chats",
+          secondary: "Saved threads",
         },
         {
           href: `/app/${currentWorkspace.slug}/activity`,
           icon: <ActivityIcon />,
           label: "Activity",
-          secondary: "Audit surface",
+          secondary: "Recent changes",
         },
         ...(currentWorkspace.role === "admin" || currentWorkspace.role === "owner"
           ? [
@@ -207,10 +208,22 @@ export function AppShell({ children, profile, workspaces }: AppShellProps) {
       ]
     : [];
 
+  const guideSteps = currentWorkspace
+    ? [
+        "Upload documents into this workspace.",
+        "Wait for processing or review any failures.",
+        "Search and ask questions from the same place.",
+      ]
+    : [
+        "Create a workspace for a team, project, or client.",
+        "Open that workspace and upload source files.",
+        "Use search and chat once documents are ready.",
+      ];
+
   const sidebar = (
-    <div className="app-noise relative flex h-full flex-col overflow-hidden rounded-[2rem] border border-[var(--app-sidebar-border)] bg-[linear-gradient(180deg,rgba(19,28,41,0.98),rgba(14,22,33,0.96))] p-5 shadow-[var(--app-shadow-strong)]">
-      <div className="app-shell-glow left-[-2rem] top-[-1rem] h-28 w-28 bg-cyan-400/16" />
-      <div className="app-shell-glow bottom-[-2rem] right-[-1rem] h-28 w-28 bg-amber-300/12" />
+    <div className="app-noise relative flex h-full flex-col overflow-hidden rounded-[2rem] border border-[var(--app-sidebar-border)] bg-[linear-gradient(180deg,rgba(15,27,45,0.98),rgba(11,19,31,0.98))] p-5 shadow-[var(--app-shadow-strong)]">
+      <div className="app-shell-glow left-[-2rem] top-[-1rem] h-28 w-28 bg-cyan-400/18" />
+      <div className="app-shell-glow bottom-[-2rem] right-[-1rem] h-28 w-28 bg-amber-300/14" />
       <div className="relative">
         <Link
           className="inline-flex items-center gap-3 text-sm font-semibold tracking-[0.18em] text-white uppercase"
@@ -223,14 +236,14 @@ export function AppShell({ children, profile, workspaces }: AppShellProps) {
           AI Knowledge Base
         </Link>
 
-        <div className="mt-6 rounded-[1.5rem] border border-white/8 bg-white/6 p-4">
+        <div className="mt-6 rounded-[1.5rem] border border-white/10 bg-white/7 p-4">
           <p className="text-xs font-semibold tracking-[0.16em] text-slate-400 uppercase">
-            Session
+            Signed in
           </p>
           <p className="mt-3 text-lg font-medium text-white">{displayName}</p>
           <p className="mt-1 text-sm text-slate-400">{profile.email ?? "No email available"}</p>
           <div className="mt-4 flex flex-wrap gap-2">
-            <Badge className="border-white/10 bg-white/8 text-slate-200">Authenticated</Badge>
+            <Badge className="border-white/10 bg-white/8 text-slate-100">Active session</Badge>
             <Badge className="border-cyan-400/20 bg-cyan-400/10 text-cyan-100">
               {workspaces.length} workspace{workspaces.length === 1 ? "" : "s"}
             </Badge>
@@ -239,7 +252,7 @@ export function AppShell({ children, profile, workspaces }: AppShellProps) {
 
         <div className="mt-6">
           <p className="mb-3 text-xs font-semibold tracking-[0.16em] text-slate-400 uppercase">
-            Workspace switcher
+            Workspace
           </p>
           <WorkspaceSwitcher
             ariaLabel="Switch active workspace"
@@ -250,7 +263,7 @@ export function AppShell({ children, profile, workspaces }: AppShellProps) {
 
         <nav aria-label="Primary navigation" className="mt-8 space-y-2">
           <p className="px-1 pb-2 text-xs font-semibold tracking-[0.16em] text-slate-400 uppercase">
-            Control center
+            Main navigation
           </p>
           {primaryNav.map((item) => (
             <NavLink
@@ -280,17 +293,23 @@ export function AppShell({ children, profile, workspaces }: AppShellProps) {
       </div>
 
       <div className="relative mt-auto pt-8">
-        <div className="rounded-[1.5rem] border border-white/8 bg-[linear-gradient(135deg,rgba(255,255,255,0.08),rgba(255,255,255,0.02))] p-4">
+        <div className="rounded-[1.5rem] border border-white/10 bg-[linear-gradient(135deg,rgba(255,255,255,0.1),rgba(255,255,255,0.03))] p-4">
           <p className="text-xs font-semibold tracking-[0.16em] text-slate-400 uppercase">
-            Shell status
+            Quick guide
           </p>
           <p className="mt-3 text-base font-medium text-white">
-            Frontend foundation is live.
+            {currentWorkspace ? "What to do in this workspace" : "How this product flows"}
           </p>
-          <p className="mt-2 text-sm leading-6 text-slate-400">
-            Search, documents, conversations, and activity routes are shaped as premium
-            empty-state surfaces until their backend phases land.
-          </p>
+          <ol className="mt-3 grid gap-3 text-sm leading-6 text-slate-300">
+            {guideSteps.map((step, index) => (
+              <li className="flex items-start gap-3" key={step}>
+                <span className="mt-0.5 inline-flex size-6 shrink-0 items-center justify-center rounded-full border border-white/12 bg-white/10 text-[11px] font-semibold text-white">
+                  {index + 1}
+                </span>
+                <span>{step}</span>
+              </li>
+            ))}
+          </ol>
         </div>
         <div className="mt-4">
           <SignOutButton />
@@ -302,10 +321,10 @@ export function AppShell({ children, profile, workspaces }: AppShellProps) {
   return (
     <div className="min-h-screen bg-[var(--app-background)] text-[var(--app-foreground)]">
       <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
-        <div className="absolute inset-x-0 top-0 h-[30rem] bg-[radial-gradient(circle_at_top_left,_rgba(21,94,117,0.18),_transparent_58%)]" />
-        <div className="absolute inset-x-0 top-0 h-[28rem] bg-[radial-gradient(circle_at_top_right,_rgba(180,83,9,0.1),_transparent_44%)]" />
+        <div className="absolute inset-x-0 top-0 h-[30rem] bg-[radial-gradient(circle_at_top_left,_rgba(21,94,117,0.16),_transparent_58%)]" />
+        <div className="absolute inset-x-0 top-0 h-[28rem] bg-[radial-gradient(circle_at_top_right,_rgba(194,140,59,0.12),_transparent_44%)]" />
         <div className="absolute left-[-6rem] top-72 h-80 w-80 rounded-full bg-cyan-600/10 blur-3xl" />
-        <div className="absolute right-[-8rem] top-20 h-96 w-96 rounded-full bg-amber-400/8 blur-3xl" />
+        <div className="absolute right-[-8rem] top-20 h-96 w-96 rounded-full bg-amber-400/10 blur-3xl" />
       </div>
 
       <div className="mx-auto flex min-h-screen max-w-[1600px] gap-0 px-3 py-3 sm:px-4 lg:px-6">
@@ -313,7 +332,7 @@ export function AppShell({ children, profile, workspaces }: AppShellProps) {
 
         <div className="flex min-h-[calc(100vh-1.5rem)] min-w-0 flex-1 flex-col lg:pl-6">
           <header className="sticky top-0 z-30 px-1 py-1">
-            <div className="rounded-[1.8rem] border border-[var(--app-border)] bg-white/72 px-4 py-4 shadow-[0_18px_50px_-30px_rgba(15,23,42,0.22)] backdrop-blur-xl sm:px-6">
+            <div className="rounded-[1.8rem] border border-[var(--app-border)] bg-white/84 px-4 py-4 shadow-[0_18px_50px_-30px_rgba(15,23,42,0.18)] backdrop-blur-xl sm:px-6">
               <div className="flex flex-col gap-4">
                 <div className="flex items-center justify-between gap-3 lg:hidden">
                   <button
@@ -349,24 +368,33 @@ export function AppShell({ children, profile, workspaces }: AppShellProps) {
                     </p>
                   </div>
 
-                  <div className="flex flex-wrap items-center gap-2">
-                    {currentWorkspace ? (
-                      <>
-                        <Badge className="border-teal-700/16 bg-teal-700/8 text-teal-800">
-                          {currentWorkspace.role}
+                  <div className="flex min-w-0 flex-col gap-3 xl:items-end">
+                    {workspaces.length > 0 ? (
+                      <WorkspaceSwitcher
+                        ariaLabel="Switch active workspace"
+                        className="w-full min-w-[15rem] xl:w-[18rem]"
+                        workspaces={workspaces}
+                      />
+                    ) : null}
+                    <div className="flex flex-wrap items-center gap-2">
+                      {currentWorkspace ? (
+                        <>
+                          <Badge className="border-teal-700/16 bg-teal-700/8 text-teal-800">
+                            {formatWorkspaceRoleLabel(currentWorkspace.role)}
+                          </Badge>
+                          <Badge className="border-amber-400/30 bg-amber-100/70 text-amber-900">
+                            /{currentWorkspace.slug}
+                          </Badge>
+                        </>
+                      ) : (
+                        <Badge className="border-slate-300 bg-white text-slate-700">
+                          {workspaces.length > 0 ? "Choose a workspace to continue" : "No workspace yet"}
                         </Badge>
-                        <Badge className="border-amber-400/30 bg-amber-100/70 text-amber-900">
-                          /{currentWorkspace.slug}
-                        </Badge>
-                      </>
-                    ) : (
-                      <Badge className="border-slate-300 bg-white text-slate-700">
-                        {workspaces.length > 0 ? "Select a workspace to dive deeper" : "No workspace yet"}
+                      )}
+                      <Badge className="border-cyan-700/14 bg-cyan-700/8 text-cyan-900">
+                        Responsive shell
                       </Badge>
-                    )}
-                    <Badge className="border-cyan-700/14 bg-cyan-700/8 text-cyan-900">
-                      Responsive shell
-                    </Badge>
+                    </div>
                   </div>
                 </div>
               </div>

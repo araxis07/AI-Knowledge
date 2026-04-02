@@ -128,7 +128,7 @@ export function SignUpForm({ next }: SignUpFormProps) {
         </div>
       </div>
 
-      <Button disabled={isPending} type="submit">
+      <Button className="text-white" disabled={isPending} type="submit" variant="accent">
         {isPending ? "Creating account..." : "Create account"}
       </Button>
 

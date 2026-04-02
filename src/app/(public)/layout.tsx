@@ -28,7 +28,10 @@ export default async function PublicLayout({ children }: PublicLayoutProps) {
             >
               Sign in
             </Link>
-            <Link className={buttonStyles({ size: "sm" })} href={asRoute("/sign-up")}>
+            <Link
+              className={buttonStyles({ className: "text-white", size: "sm", variant: "accent" })}
+              href={asRoute("/sign-up")}
+            >
               Create account
             </Link>
           </div>

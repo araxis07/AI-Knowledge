@@ -7,6 +7,7 @@ import { Select } from "@/components/ui/select";
 import type { WorkspaceSummary } from "@/lib/types/workspaces";
 import { asRoute } from "@/lib/utils/as-route";
 import { cn } from "@/lib/utils/cn";
+import { formatWorkspaceRoleLabel } from "@/lib/utils/workspace-labels";
 
 function buildWorkspaceDestination(pathname: string, nextSlug: string) {
   const segments = pathname.split("/");
@@ -49,9 +50,9 @@ export function WorkspaceSwitcher({
   return (
     <Select
       aria-label={ariaLabel}
-      className={cn("min-w-[13rem] bg-white/90", className)}
-      defaultValue={currentSlug || workspaces[0]?.slug}
+      className={cn("min-w-[13rem] bg-white text-slate-950", className)}
       disabled={isPending}
+      value={currentSlug || workspaces[0]?.slug}
       onChange={(event) => {
         const nextSlug = event.currentTarget.value;
 
@@ -62,7 +63,7 @@ export function WorkspaceSwitcher({
     >
       {workspaces.map((workspace) => (
         <option key={workspace.id} value={workspace.slug}>
-          {workspace.name} · {workspace.role}
+          {workspace.name} · {formatWorkspaceRoleLabel(workspace.role)}
         </option>
       ))}
     </Select>

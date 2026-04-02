@@ -2,48 +2,47 @@
 
 :root {
   --font-sans:
-    "Avenir Next", "Segoe UI Variable Display", "SF Pro Display", "Helvetica Neue",
-    sans-serif;
+    "SF Pro Text", "Avenir Next", "Segoe UI Variable", "Helvetica Neue", sans-serif;
   --font-display:
-    "Iowan Old Style", "Palatino Linotype", "Book Antiqua", "Times New Roman", serif;
+    "New York", "Iowan Old Style", "Palatino Linotype", "Book Antiqua", serif;
   --font-mono:
     "SF Mono", "SFMono-Regular", "Cascadia Code", "JetBrains Mono", "Menlo", monospace;
 
-  --app-background: #f4efe7;
-  --app-background-strong: #eee5d9;
-  --app-foreground: #18212f;
-  --app-foreground-soft: #415169;
-  --app-muted: #5d6678;
-  --app-border: rgba(24, 33, 47, 0.1);
-  --app-border-strong: rgba(24, 33, 47, 0.18);
-  --app-panel: rgba(255, 251, 247, 0.82);
-  --app-panel-strong: rgba(255, 255, 255, 0.96);
-  --app-panel-muted: rgba(245, 239, 231, 0.82);
-  --app-panel-ink: rgba(24, 33, 47, 0.9);
-  --app-sidebar: rgba(19, 28, 41, 0.92);
-  --app-sidebar-border: rgba(255, 255, 255, 0.08);
+  --app-background: #f6f0e6;
+  --app-background-strong: #ecdfcf;
+  --app-foreground: #122033;
+  --app-foreground-soft: #35465d;
+  --app-muted: #5a6b83;
+  --app-border: rgba(18, 32, 51, 0.12);
+  --app-border-strong: rgba(18, 32, 51, 0.22);
+  --app-panel: rgba(255, 253, 250, 0.96);
+  --app-panel-strong: #ffffff;
+  --app-panel-muted: #f3ebdf;
+  --app-panel-ink: #112033;
+  --app-sidebar: #0f1b2d;
+  --app-sidebar-border: rgba(255, 255, 255, 0.1);
   --app-accent: #0f766e;
-  --app-accent-strong: #155e75;
-  --app-accent-soft: rgba(15, 118, 110, 0.12);
-  --app-highlight: #d7a14a;
+  --app-accent-strong: #134e63;
+  --app-accent-soft: rgba(15, 118, 110, 0.14);
+  --app-highlight: #c28c3b;
   --app-success: #0f766e;
   --app-warning: #b45309;
   --app-danger: #b42318;
   --app-shadow:
-    0 28px 80px -32px rgba(15, 23, 42, 0.38),
-    0 12px 24px -18px rgba(15, 23, 42, 0.26);
+    0 30px 70px -34px rgba(15, 23, 42, 0.24),
+    0 16px 30px -22px rgba(15, 23, 42, 0.18);
   --app-shadow-strong:
-    0 42px 100px -44px rgba(15, 23, 42, 0.42),
-    0 22px 40px -28px rgba(15, 23, 42, 0.32);
+    0 48px 96px -48px rgba(15, 23, 42, 0.38),
+    0 24px 44px -26px rgba(15, 23, 42, 0.24);
   --app-radius-card: 2rem;
   --app-radius-panel: 1.5rem;
   --app-radius-pill: 999px;
   --space-section: clamp(3.25rem, 5vw, 5.75rem);
   --space-stack: clamp(1rem, 2vw, 1.5rem);
-  --text-display: clamp(2.4rem, 1.5rem + 2.8vw, 4.7rem);
-  --text-title: clamp(1.7rem, 1.15rem + 1.6vw, 2.65rem);
-  --text-subtitle: clamp(1.12rem, 1rem + 0.4vw, 1.32rem);
-  --text-body: clamp(0.98rem, 0.95rem + 0.18vw, 1.08rem);
+  --text-display: clamp(2.8rem, 1.8rem + 3.1vw, 5rem);
+  --text-title: clamp(1.8rem, 1.2rem + 1.7vw, 2.8rem);
+  --text-subtitle: clamp(1.06rem, 1rem + 0.42vw, 1.28rem);
+  --text-body: clamp(0.98rem, 0.95rem + 0.18vw, 1.06rem);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -60,6 +59,7 @@
 }
 
 html {
+  background: linear-gradient(180deg, #f8f2e9, #efe4d5);
   scroll-behavior: smooth;
 }
 
@@ -67,14 +67,14 @@ body {
   margin: 0;
   min-height: 100vh;
   background:
-    radial-gradient(circle at top left, rgba(15, 118, 110, 0.14), transparent 34%),
-    radial-gradient(circle at top right, rgba(180, 83, 9, 0.12), transparent 30%),
-    linear-gradient(180deg, rgba(255, 252, 248, 0.88), rgba(244, 239, 231, 0.94)),
+    radial-gradient(circle at top left, rgba(15, 118, 110, 0.12), transparent 34%),
+    radial-gradient(circle at top right, rgba(194, 140, 59, 0.14), transparent 32%),
+    linear-gradient(180deg, rgba(255, 253, 249, 0.92), rgba(246, 240, 230, 0.95)),
     linear-gradient(135deg, var(--app-background), var(--app-background-strong));
   color: var(--app-foreground);
   font-family: var(--font-sans);
   font-size: var(--text-body);
-  line-height: 1.55;
+  line-height: 1.6;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -92,7 +92,7 @@ h2,
 h3,
 h4 {
   margin: 0;
-  letter-spacing: -0.04em;
+  letter-spacing: -0.045em;
 }
 
 h1,
@@ -131,10 +131,10 @@ a {
   position: absolute;
   inset: 0;
   background-image:
-    linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
-  background-size: 20px 20px;
-  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.6), transparent 82%);
+    linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+  background-size: 22px 22px;
+  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.72), transparent 84%);
   pointer-events: none;
 }
 
@@ -142,6 +142,6 @@ a {
   position: absolute;
   inset: auto;
   border-radius: 999px;
-  filter: blur(44px);
+  filter: blur(54px);
   pointer-events: none;
 }

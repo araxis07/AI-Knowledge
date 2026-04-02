@@ -1,5 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import type { WorkspaceRole } from "@/lib/types/workspaces";
+import { formatWorkspaceRoleLabel } from "@/lib/utils/workspace-labels";
 
 const roleTheme: Record<WorkspaceRole, string> = {
   admin: "border-cyan-200 bg-cyan-50 text-cyan-800",
@@ -9,5 +10,5 @@ const roleTheme: Record<WorkspaceRole, string> = {
 };
 
 export function RoleBadge({ role }: { role: WorkspaceRole }) {
-  return <Badge className={roleTheme[role]}>{role}</Badge>;
+  return <Badge className={roleTheme[role]}>{formatWorkspaceRoleLabel(role)}</Badge>;
 }

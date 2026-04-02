@@ -77,7 +77,7 @@ export function CreateWorkspaceForm() {
         </label>
         <Input
           id="workspace-name"
-          placeholder="Product research"
+          placeholder="Customer support knowledge"
           type="text"
           {...form.register("name", {
             onChange: (event) => {
@@ -99,7 +99,7 @@ export function CreateWorkspaceForm() {
         </label>
         <Input
           id="workspace-slug"
-          placeholder="product-research"
+          placeholder="customer-support-knowledge"
           type="text"
           {...form.register("slug", {
             onChange: () => {
@@ -109,7 +109,9 @@ export function CreateWorkspaceForm() {
         />
         <p className="text-sm text-slate-500">
           This becomes part of the URL. Suggested:{" "}
-          <span className="font-semibold text-slate-900">{suggestedSlug || "product-research"}</span>
+          <span className="font-semibold text-slate-900">
+            {suggestedSlug || "customer-support-knowledge"}
+          </span>
         </p>
         {errors.slug && <p className="text-sm text-rose-600">{errors.slug}</p>}
       </div>
@@ -120,7 +122,7 @@ export function CreateWorkspaceForm() {
         </label>
         <Textarea
           id="workspace-description"
-          placeholder="What this workspace is for, who it serves, and how answers should be grounded."
+          placeholder="Who this workspace is for and what kind of documents or questions will live here."
           {...form.register("description")}
         />
         {errors.description && <p className="text-sm text-rose-600">{errors.description}</p>}
@@ -162,7 +164,7 @@ export function CreateWorkspaceForm() {
           {...form.register("citationsRequired")}
         />
         <span>
-          Require citations by default for grounded answers in this workspace.
+          Require source citations by default when the assistant answers in this workspace.
         </span>
       </label>
 

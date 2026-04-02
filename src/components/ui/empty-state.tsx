@@ -27,11 +27,11 @@ export function EmptyState({
         className,
       )}
     >
-      <div className="app-shell-glow right-[-2rem] top-[-2rem] h-32 w-32 bg-teal-500/12" />
+      <div className="app-shell-glow right-[-2rem] top-[-2rem] h-32 w-32 bg-teal-500/14" />
       <div className="relative flex flex-col gap-5">
         <div className="flex items-center gap-4">
           {icon ? (
-            <div className="inline-flex size-12 items-center justify-center rounded-full border border-[var(--app-border)] bg-white/84 text-slate-800">
+            <div className="inline-flex size-12 items-center justify-center rounded-full border border-[var(--app-border)] bg-[var(--app-panel-muted)] text-slate-900">
               {icon}
             </div>
           ) : null}
@@ -41,7 +41,9 @@ export function EmptyState({
         </div>
         <div>
           <h2 className="text-[var(--text-title)] leading-tight text-slate-950">{title}</h2>
-          <p className="mt-3 max-w-2xl text-base leading-7 text-slate-600">{description}</p>
+          <p className="mt-3 max-w-2xl text-base leading-7 text-[var(--app-foreground-soft)]">
+            {description}
+          </p>
         </div>
         {actions ? <div className="flex flex-wrap items-center gap-3">{actions}</div> : null}
       </div>

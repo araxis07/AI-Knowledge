@@ -24,6 +24,7 @@ import {
 import { asRoute } from "@/lib/utils/as-route";
 import { formatBytes } from "@/lib/utils/format-bytes";
 import { getSearchParamValue } from "@/lib/utils/search-param-value";
+import { formatWorkspaceRoleLabel } from "@/lib/utils/workspace-labels";
 import { hasMinimumWorkspaceRole, requireWorkspaceAccess } from "@/lib/workspaces";
 
 type WorkspaceDocumentsPageProps = {
@@ -79,13 +80,13 @@ export default async function WorkspaceDocumentsPage({
         actions={
           canManageDocuments ? (
             <Badge className="border-cyan-200 bg-cyan-50 text-cyan-700">
-              Editor access enabled
+              You can upload and manage documents
             </Badge>
           ) : (
-            <Badge>Viewer access</Badge>
+            <Badge>View only</Badge>
           )
         }
-        description="Keep the source corpus private per workspace, register every upload in Postgres, and make document state visible before chunking and retrieval layers arrive."
+        description="This library shows every file in the workspace, its current status, and the next action you can take."
         eyebrow="Document library"
         title={`${access.workspace.name} library`}
       />
@@ -100,20 +101,20 @@ export default async function WorkspaceDocumentsPage({
         <MetricCard
           icon={<FileStackIcon />}
           label="Documents"
-          note="Rows persisted in the workspace library."
+          note="Files currently registered in this workspace."
           tone="tint"
           value={String(documents.length)}
         />
         <MetricCard
           icon={<CheckCircleIcon />}
           label="Ready"
-          note="Indexed documents surface as ready."
+          note="Files that are ready to use."
           value={String(readyCount)}
         />
         <MetricCard
           icon={<ClockIcon />}
           label="Processing"
-          note="Queued or running ingestion activity."
+          note="Files still uploading or processing."
           value={String(processingCount)}
         />
         <MetricCard
@@ -130,15 +131,17 @@ export default async function WorkspaceDocumentsPage({
         ) : (
           <Card className="p-6 sm:p-7">
             <h2 className="text-xl font-semibold tracking-tight text-slate-950">
-              Uploads are role-gated
+              Uploads are limited by role
             </h2>
             <p className="mt-3 text-base leading-7 text-slate-600">
-              Viewers can browse the workspace corpus but cannot add, archive, or delete source
-              files. Upgrade to editor access or higher to manage the library.
+              Viewers can browse the library but cannot upload, archive, or delete files. Editors, admins, and owners can manage documents.
             </p>
             <div className="mt-6 rounded-[1.5rem] border border-[var(--app-border)] bg-[var(--app-panel-muted)] p-5 text-sm leading-6 text-slate-600">
-              The current role for this workspace is{" "}
-              <span className="font-semibold text-slate-950">{access.role}</span>.
+              Your current role in this workspace is{" "}
+              <span className="font-semibold text-slate-950">
+                {formatWorkspaceRoleLabel(access.role)}
+              </span>
+              .
             </div>
           </Card>
         )}
@@ -147,10 +150,10 @@ export default async function WorkspaceDocumentsPage({
           <div className="flex items-center justify-between gap-4">
             <div>
               <h2 className="text-xl font-semibold tracking-tight text-slate-950">
-                Corpus inventory
+                All documents
               </h2>
               <p className="mt-2 text-sm leading-6 text-slate-600">
-                Every row below is backed by the `documents` table and scoped by workspace RLS.
+                Open any document to see its details, preview, and current processing state.
               </p>
             </div>
             <Badge className="border-slate-200 bg-slate-100 text-slate-700">
@@ -164,15 +167,14 @@ export default async function WorkspaceDocumentsPage({
                 actions={
                   canManageDocuments ? (
                     <p className="text-sm leading-6 text-slate-500">
-                      Upload the first file to create a real document row and storage object for
-                      this workspace.
+                      Upload the first file to start building this workspace library.
                     </p>
                   ) : undefined
                 }
-                description="The library is still empty. Once documents are uploaded, this page will show storage-backed metadata, processing state, and links into document detail views."
+                description="The library is empty right now. Uploaded files will appear here with their status and a link to open details."
                 eyebrow="Empty library"
                 icon={<UploadIcon />}
-                title={`No documents are registered in ${access.workspace.name} yet.`}
+                title={`No documents in ${access.workspace.name} yet.`}
               />
             </div>
           ) : (
@@ -197,7 +199,7 @@ export default async function WorkspaceDocumentsPage({
 
                       <p className="mt-3 text-sm leading-6 text-slate-600">
                         {document.description ??
-                          "No manual description has been added for this document yet."}
+                          "No description has been added for this document yet."}
                       </p>
 
                       <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-sm text-slate-500">
@@ -221,7 +223,7 @@ export default async function WorkspaceDocumentsPage({
                         className={buttonStyles({ size: "sm", variant: "secondary" })}
                         href={asRoute(`/app/${access.workspace.slug}/documents/${document.id}`)}
                       >
-                        Open detail
+                        Open details
                         <ArrowUpRightIcon />
                       </Link>
 

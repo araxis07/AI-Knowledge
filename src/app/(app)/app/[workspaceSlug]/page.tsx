@@ -8,6 +8,11 @@ import { MetricCard } from "@/components/ui/metric-card";
 import { ArrowUpRightIcon, ChatIcon, FileStackIcon, SearchIcon, SparkIcon } from "@/components/ui/icons";
 import { requireWorkspaceAccess, getWorkspaceRoleCopy } from "@/lib/workspaces";
 import { asRoute } from "@/lib/utils/as-route";
+import {
+  formatConversationVisibilityLabel,
+  formatSearchModeLabel,
+  formatWorkspaceRoleLabel,
+} from "@/lib/utils/workspace-labels";
 
 type WorkspaceOverviewPageProps = {
   params: Promise<{
@@ -29,24 +34,26 @@ export default async function WorkspaceOverviewPage({
           label="Your role"
           note={getWorkspaceRoleCopy(access.role)}
           tone="tint"
-          value={access.role}
+          value={formatWorkspaceRoleLabel(access.role)}
         />
         <MetricCard
           icon={<SearchIcon />}
           label="Default search"
-          note="Current retrieval default wired into workspace settings."
-          value={access.workspace.settings.defaultSearchMode}
+          note="How search will work here by default."
+          value={formatSearchModeLabel(access.workspace.settings.defaultSearchMode)}
         />
         <MetricCard
           icon={<ChatIcon />}
-          label="Conversation visibility"
-          note="Default audience for future assistant threads."
-          value={access.workspace.settings.defaultConversationVisibility}
+          label="Chat visibility"
+          note="Who can see new chats by default."
+          value={formatConversationVisibilityLabel(
+            access.workspace.settings.defaultConversationVisibility,
+          )}
         />
         <MetricCard
           icon={<FileStackIcon />}
-          label="Citations policy"
-          note="Whether grounded responses must cite sources by default."
+          label="Citations"
+          note="Whether answers should cite sources by default."
           value={access.workspace.settings.citationsRequired ? "Required" : "Flexible"}
         />
       </section>
@@ -56,41 +63,41 @@ export default async function WorkspaceOverviewPage({
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <p className="text-sm font-semibold tracking-[0.2em] text-teal-700 uppercase">
-                Launch points
+                Start here
               </p>
               <h2 className="mt-3 text-[var(--text-title)] leading-tight text-slate-950">
-                Move through the workspace with clear intent.
+                Follow the workflow in order.
               </h2>
             </div>
             <Badge className="border-slate-300 bg-white text-slate-700">
-              No fake content
+              Workspace ready
             </Badge>
           </div>
 
           <div className="mt-8 grid gap-4 md:grid-cols-2">
             {[
               {
-                copy: "Prepare the retrieval surface before semantic and hybrid search land.",
-                href: `/app/${access.workspace.slug}/search`,
-                icon: <SearchIcon />,
-                label: "Search",
-              },
-              {
-                copy: "Stage the corpus area for uploads, ingestion, and document governance.",
+                copy: "Upload and manage the source files that power this workspace.",
                 href: `/app/${access.workspace.slug}/documents`,
                 icon: <FileStackIcon />,
-                label: "Documents",
+                label: "Open document library",
               },
               {
-                copy: "Reserve a dedicated surface for grounded Q&A threads and answer history.",
+                copy: "Search across uploaded files when the library is ready.",
+                href: `/app/${access.workspace.slug}/search`,
+                icon: <SearchIcon />,
+                label: "Search this workspace",
+              },
+              {
+                copy: "Ask grounded questions and keep answer threads in one place.",
                 href: `/app/${access.workspace.slug}/conversations`,
                 icon: <ChatIcon />,
-                label: "Conversations",
+                label: "Open chats",
               },
             ].map((item) => (
               <Link
                 key={item.href}
-                className="group rounded-[1.6rem] border border-[var(--app-border)] bg-white/82 p-5 transition duration-200 hover:-translate-y-1 hover:border-[var(--app-border-strong)] hover:shadow-[var(--app-shadow)]"
+                className="group rounded-[1.6rem] border border-[var(--app-border)] bg-white p-5 transition duration-200 hover:-translate-y-1 hover:border-[var(--app-border-strong)] hover:shadow-[var(--app-shadow)]"
                 href={asRoute(item.href)}
               >
                 <div className="inline-flex size-11 items-center justify-center rounded-full border border-[var(--app-border)] bg-[var(--app-panel-muted)] text-slate-800">
@@ -99,7 +106,7 @@ export default async function WorkspaceOverviewPage({
                 <h3 className="mt-5 text-2xl leading-tight text-slate-950">{item.label}</h3>
                 <p className="mt-3 text-sm leading-6 text-slate-600">{item.copy}</p>
                 <div className="mt-5 inline-flex items-center gap-2 text-sm font-medium text-slate-900">
-                  Open surface
+                  Continue
                   <ArrowUpRightIcon />
                 </div>
               </Link>
@@ -113,14 +120,14 @@ export default async function WorkspaceOverviewPage({
               className={buttonStyles({ size: "lg", variant: "accent" })}
               href={asRoute(`/app/${access.workspace.slug}/documents`)}
             >
-              Visit documents
+              Upload the first document
               <ArrowUpRightIcon />
             </Link>
           }
-          description="There is no indexed corpus attached yet, which is exactly what this phase expects. The shell shows the future structure without pretending uploads, chunks, or embeddings already exist."
-          eyebrow="Current state"
+          description="The simplest path is: add a document, wait for processing, then search or ask inside this same workspace."
+          eyebrow="Next best action"
           icon={<FileStackIcon />}
-          title="This workspace is waiting for its first document corpus."
+          title="This workspace is waiting for its first document."
         />
       </section>
     </div>

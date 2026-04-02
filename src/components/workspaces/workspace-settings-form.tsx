@@ -119,7 +119,7 @@ export function WorkspaceSettingsForm({
           })}
         />
         <p className="text-sm text-slate-500">
-          Suggested slug:{" "}
+          This becomes part of the URL. Suggested:{" "}
           <span className="font-semibold text-slate-900">{suggestedSlug || workspace.slug}</span>
         </p>
         {errors.slug && <p className="text-sm text-rose-600">{errors.slug}</p>}
@@ -132,7 +132,11 @@ export function WorkspaceSettingsForm({
         >
           Description
         </label>
-        <Textarea id="workspace-settings-description" {...form.register("description")} />
+        <Textarea
+          id="workspace-settings-description"
+          placeholder="What this workspace is for and what kind of documents or questions belong here."
+          {...form.register("description")}
+        />
         {errors.description && <p className="text-sm text-rose-600">{errors.description}</p>}
       </div>
 
@@ -171,7 +175,7 @@ export function WorkspaceSettingsForm({
           type="checkbox"
           {...form.register("citationsRequired")}
         />
-        <span>Require citations by default for grounded assistant answers.</span>
+        <span>Require source citations by default when the assistant answers in this workspace.</span>
       </label>
 
       <Button disabled={isPending} type="submit">
