@@ -1,7 +1,7 @@
 import { Buffer } from "node:buffer";
 
-import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
+import { after, NextResponse } from "next/server";
 
 import {
   computeSha256Checksum,
@@ -18,6 +18,10 @@ import {
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { findWorkspaceAccessBySlug, hasMinimumWorkspaceRole } from "@/lib/workspaces";
 import { uploadDocumentSchema } from "@/lib/validation/documents";
+import {
+  getIngestionWorkerAvailability,
+  runQueuedIngestionJob,
+} from "@/server/ingestion/run-job";
 
 type UploadRouteContext = {
   params: Promise<{
@@ -108,6 +112,8 @@ export async function POST(request: Request, { params }: UploadRouteContext) {
   }
 
   const documentId = newDocumentId();
+  const workerAvailability = getIngestionWorkerAvailability();
+  const queuedProgressMessage = workerAvailability.ready ? null : workerAvailability.message;
   const storagePath = createDocumentStoragePath(
     access.workspace.id,
     documentId,
@@ -141,6 +147,7 @@ export async function POST(request: Request, { params }: UploadRouteContext) {
       mime_type: contentType,
       size_bytes: file.size,
       source_type: "upload",
+      status: "queued",
       storage_bucket: DOCUMENT_BUCKET,
       storage_path: storagePath,
       title,
@@ -155,7 +162,7 @@ export async function POST(request: Request, { params }: UploadRouteContext) {
     return jsonError(`Unable to save document metadata: ${documentError?.message ?? "Unknown error"}`, 500);
   }
 
-  const { error: queueError } = await insertDocumentIngestionJob({
+  const { data: queuedJob, error: queueError } = await insertDocumentIngestionJob({
     documentId: document.id,
     jobKind: "extract",
     payload: {
@@ -166,15 +173,44 @@ export async function POST(request: Request, { params }: UploadRouteContext) {
       storagePath,
       title,
     },
+    ...(queuedProgressMessage ? { progressMessage: queuedProgressMessage } : {}),
     requestedBy: user.id,
     workspaceId: access.workspace.id,
   });
+
+  if (queueError) {
+    await supabase
+      .from("documents")
+      .update({
+        status: "uploaded",
+      })
+      .eq("workspace_id", access.workspace.id)
+      .eq("id", document.id);
+  }
+
+  const backgroundProcessingStarted = Boolean(
+    !queueError && queuedJob && workerAvailability.ready,
+  );
+
+  if (backgroundProcessingStarted && queuedJob) {
+    after(async () => {
+      try {
+        await runQueuedIngestionJob(queuedJob.id);
+      } catch (error) {
+        console.error("Failed to execute queued ingestion job.", {
+          error,
+          jobId: queuedJob.id,
+        });
+      }
+    });
+  }
 
   await insertDocumentActivityLog({
     action: "document.uploaded",
     actorUserId: user.id,
     entityId: document.id,
     payload: {
+      dispatchStatus: backgroundProcessingStarted ? "started" : "queued",
       fileName: file.name,
       jobQueued: !queueError,
       sizeBytes: file.size,
@@ -191,7 +227,9 @@ export async function POST(request: Request, { params }: UploadRouteContext) {
       documentId: document.id,
       message: queueError
         ? "The document uploaded successfully, but automatic processing was not queued yet."
-        : "The document uploaded successfully and was queued for processing.",
+        : backgroundProcessingStarted
+          ? "The document uploaded successfully and processing has started."
+        : "The document uploaded successfully and is queued for processing.",
       title: document.title,
     },
     {

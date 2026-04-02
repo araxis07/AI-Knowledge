@@ -2,6 +2,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { DocumentActionForms } from "@/components/documents/document-action-forms";
+import { DocumentIngestionAutoRefresh } from "@/components/documents/document-ingestion-auto-refresh";
+import { DocumentIngestionProgress } from "@/components/documents/document-ingestion-progress";
 import { DocumentStatusBadge } from "@/components/documents/document-status-badge";
 import { Badge } from "@/components/ui/badge";
 import { buttonStyles } from "@/components/ui/button";
@@ -11,6 +13,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { getWorkspaceDocumentDetail, getDocumentKindLabel } from "@/lib/documents";
 import { asRoute } from "@/lib/utils/as-route";
 import { formatBytes } from "@/lib/utils/format-bytes";
+import { isDocumentJobActive } from "@/lib/utils/document-ingestion";
 import { getSearchParamValue } from "@/lib/utils/search-param-value";
 import { hasMinimumWorkspaceRole, requireWorkspaceAccess } from "@/lib/workspaces";
 
@@ -63,6 +66,7 @@ export default async function DocumentDetailPage({
 
   return (
     <div className="space-y-6">
+      <DocumentIngestionAutoRefresh active={isDocumentJobActive(document.latestJob)} />
       <PageHeader
         actions={
           <div className="flex flex-wrap gap-3">
@@ -153,6 +157,26 @@ export default async function DocumentDetailPage({
                 {formatBytes(document.sizeBytes)}
               </dd>
             </div>
+            {document.chunkCount !== null ? (
+              <div className="rounded-[1.35rem] border border-[var(--app-border)] bg-white/84 p-4">
+                <dt className="text-xs font-semibold tracking-[0.18em] text-slate-500 uppercase">
+                  Chunks stored
+                </dt>
+                <dd className="mt-2 text-sm font-medium text-slate-950">
+                  {document.chunkCount}
+                </dd>
+              </div>
+            ) : null}
+            {document.indexedAt ? (
+              <div className="rounded-[1.35rem] border border-[var(--app-border)] bg-white/84 p-4">
+                <dt className="text-xs font-semibold tracking-[0.18em] text-slate-500 uppercase">
+                  Indexed at
+                </dt>
+                <dd className="mt-2 text-sm font-medium text-slate-950">
+                  {formatTimestamp(document.indexedAt)}
+                </dd>
+              </div>
+            ) : null}
             <div className="rounded-[1.35rem] border border-[var(--app-border)] bg-white/84 p-4 sm:col-span-2">
               <dt className="text-xs font-semibold tracking-[0.18em] text-slate-500 uppercase">
                 Storage object
@@ -204,6 +228,9 @@ export default async function DocumentDetailPage({
                 <br />
                 Finished: {formatTimestamp(document.latestJob?.finishedAt ?? null)}
               </p>
+              {document.latestJob && isDocumentJobActive(document.latestJob) ? (
+                <DocumentIngestionProgress className="mt-4" job={document.latestJob} />
+              ) : null}
               {document.latestJob?.errorMessage ? (
                 <p className="mt-3 rounded-[1rem] border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
                   {document.latestJob.errorMessage}

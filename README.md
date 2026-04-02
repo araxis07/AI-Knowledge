@@ -1,8 +1,8 @@
 # AI Knowledge Base
 
-Production-oriented scaffold for a full-stack AI knowledge base and semantic document search platform built with Next.js App Router, TypeScript, Tailwind CSS, and a Supabase-first backend architecture.
+Production-oriented full-stack foundation for an AI knowledge base and semantic document search platform built with Next.js App Router, TypeScript, Tailwind CSS, and a Supabase-first backend architecture.
 
-This repository currently contains Phase 2 foundation: the original scaffold plus real Supabase Auth integration, protected application routes, user profile sync, workspace creation, role-aware navigation, and a workspace settings foundation.
+This repository currently contains the product shell, real Supabase Auth, workspace management, document library uploads, and an asynchronous ingestion foundation that extracts text, chunks content, and stores embeddings in Postgres with pgvector.
 
 ## Stack
 
@@ -27,17 +27,23 @@ This repository currently contains Phase 2 foundation: the original scaffold plu
 - workspace creation, switching, and settings foundation
 - role-aware workspace access for `owner`, `admin`, `editor`, and `viewer`
 - initial SQL migrations with RLS, pgvector, and full-text search support
+- real document uploads into a private Supabase Storage bucket
+- document library list and detail pages backed by Postgres
+- asynchronous ingestion jobs with progress tracking
+- text extraction for PDF, Markdown, and plain-text files
+- normalized chunk generation with overlap
+- swappable embedding adapter foundation with an OpenAI implementation
+- chunk and vector persistence in `document_chunks`
 - health endpoints
 - environment template
 - GitHub Actions CI foundation
 
 ## Not Included Yet
 
-- document upload or storage integration
-- embeddings or vector search
+- hybrid search and retrieval ranking
 - AI chat and citations
 - member invitation workflows
-- document ingestion jobs and retrieval UX
+- extraction workers outside the Next.js runtime
 
 ## Requirements
 
@@ -74,9 +80,16 @@ NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
+AI_EMBEDDING_PROVIDER=openai
+AI_OPENAI_BASE_URL=https://api.openai.com/v1
+AI_OPENAI_EMBEDDING_MODEL=text-embedding-3-small
+AI_OPENAI_EMBEDDING_DIMENSIONS=1536
+OPENAI_API_KEY=
 ```
 
 `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` is the preferred public key. `NEXT_PUBLIC_SUPABASE_ANON_KEY` is kept as a compatibility fallback during Supabase's key transition. `SUPABASE_SERVICE_ROLE_KEY` is only for trusted server-side workflows and must never be exposed to the browser.
+
+The ingestion worker runs after the request completes by using Next.js server-side background callbacks. It needs `SUPABASE_SERVICE_ROLE_KEY` to read storage and write chunks, and it needs `OPENAI_API_KEY` to generate embeddings with the default provider.
 
 ## Project Structure
 
@@ -90,6 +103,7 @@ src/
     auth/callback/
   components/
     auth/
+    documents/
     layout/
     ui/
     workspaces/
@@ -97,6 +111,8 @@ src/
     supabase/
     utils/
     validation/
+  server/
+    ingestion/
 supabase/
   migrations/
 ```
@@ -112,7 +128,7 @@ GitHub Actions runs:
 
 ## Next Phases
 
-1. Member invitations and richer workspace administration
-2. Document upload and ingestion pipeline
-3. Hybrid semantic search
-4. Grounded AI Q&A with citations
+1. Hybrid semantic search and retrieval ranking
+2. Grounded AI Q&A with citations
+3. Member invitations and richer workspace administration
+4. E2E coverage for document and ingestion flows

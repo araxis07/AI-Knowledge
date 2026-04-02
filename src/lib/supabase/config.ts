@@ -40,8 +40,24 @@ export function getSupabasePublicConfig() {
 }
 
 export function getSupabaseServiceRoleConfig() {
+  const config = getOptionalSupabaseServiceRoleConfig();
+
+  if (!config) {
+    throw new Error(
+      "Supabase service-role config is incomplete. Set NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY.",
+    );
+  }
+
+  return config;
+}
+
+export function getOptionalSupabaseServiceRoleConfig() {
   const publicEnv = readPublicEnv();
   const serverEnv = readServerEnv();
+
+  if (!publicEnv.NEXT_PUBLIC_SUPABASE_URL || !serverEnv.SUPABASE_SERVICE_ROLE_KEY) {
+    return null;
+  }
 
   return supabaseServiceRoleConfigSchema.parse({
     url: publicEnv.NEXT_PUBLIC_SUPABASE_URL,

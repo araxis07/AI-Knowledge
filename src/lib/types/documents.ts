@@ -40,19 +40,29 @@ export type DocumentJobSummary = {
   finishedAt: string | null;
   id: string;
   jobKind: IngestionJobKind;
+  progressMessage: string | null;
+  progressMetadata: Record<string, unknown>;
   startedAt: string | null;
   status: IngestionJobStatus;
+  stepsCompleted: number;
+  stepsTotal: number;
   updatedAt: string;
 };
 
 export type WorkspaceDocumentSummary = {
   checksumSha256: string | null;
+  chunkCount: number | null;
   createdAt: string;
   description: string | null;
   displayStatus: LibraryDocumentStatus;
+  embeddingModel: string | null;
+  embeddingProvider: string | null;
+  extractedCharCount: number | null;
   fileExtension: string | null;
   id: string;
+  indexedAt: string | null;
   kind: DocumentKind;
+  lastIngestedAt: string | null;
   latestJob: DocumentJobSummary | null;
   mimeType: string;
   pageCount: number | null;

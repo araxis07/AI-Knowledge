@@ -27,10 +27,16 @@ const TEXT_PREVIEW_MAX_BYTES = 1024 * 1024;
 
 type DocumentRow = {
   checksum_sha256: string | null;
+  chunk_count: number | null;
   created_at: string;
   description: string | null;
+  embedding_model: string | null;
+  embedding_provider: string | null;
+  extracted_char_count: number | null;
   file_extension: string | null;
   id: string;
+  indexed_at: string | null;
+  last_ingested_at: string | null;
   metadata: Record<string, unknown> | null;
   mime_type: string;
   page_count: number | null;
@@ -52,9 +58,27 @@ type IngestionJobRow = {
   finished_at: string | null;
   id: string;
   job_kind: IngestionJobKind;
+  progress_message: string | null;
+  progress_metadata: Record<string, unknown> | null;
   started_at: string | null;
   status: IngestionJobStatus;
+  steps_completed: number | null;
+  steps_total: number | null;
   updated_at: string;
+};
+
+type InsertedJobRow = {
+  created_at: string;
+  document_id: string;
+  id: string;
+  status: IngestionJobStatus;
+};
+
+export type QueuedIngestionJob = {
+  createdAt: string;
+  documentId: string;
+  id: string;
+  status: IngestionJobStatus;
 };
 
 export function computeSha256Checksum(buffer: Buffer) {
@@ -73,8 +97,12 @@ function mapDocumentJob(row: IngestionJobRow): DocumentJobSummary {
     finishedAt: row.finished_at,
     id: row.id,
     jobKind: row.job_kind,
+    progressMessage: row.progress_message,
+    progressMetadata: row.progress_metadata ?? {},
     startedAt: row.started_at,
     status: row.status,
+    stepsCompleted: row.steps_completed ?? 0,
+    stepsTotal: row.steps_total ?? 0,
     updatedAt: row.updated_at,
   };
 }
@@ -97,12 +125,18 @@ function mapDocumentSummary(
 
   return {
     checksumSha256: row.checksum_sha256,
+    chunkCount: row.chunk_count,
     createdAt: row.created_at,
     description: row.description,
     displayStatus: deriveLibraryDocumentStatus(row.status, latestJob),
+    embeddingModel: row.embedding_model,
+    embeddingProvider: row.embedding_provider,
+    extractedCharCount: row.extracted_char_count,
     fileExtension: row.file_extension,
     id: row.id,
+    indexedAt: row.indexed_at,
     kind,
+    lastIngestedAt: row.last_ingested_at,
     latestJob,
     mimeType: row.mime_type,
     pageCount: row.page_count,
@@ -124,7 +158,7 @@ export async function listWorkspaceDocuments(
   const { data: documents, error: documentsError } = await supabase
     .from("documents")
     .select(
-      "id, title, description, summary, storage_bucket, storage_path, mime_type, file_extension, size_bytes, checksum_sha256, page_count, token_count, status, metadata, created_at, updated_at",
+      "id, title, description, summary, storage_bucket, storage_path, mime_type, file_extension, size_bytes, checksum_sha256, page_count, token_count, chunk_count, extracted_char_count, embedding_provider, embedding_model, indexed_at, last_ingested_at, status, metadata, created_at, updated_at",
     )
     .eq("workspace_id", workspaceId)
     .order("updated_at", {
@@ -143,7 +177,7 @@ export async function listWorkspaceDocuments(
   const { data: jobs, error: jobsError } = await supabase
     .from("ingestion_jobs")
     .select(
-      "id, document_id, job_kind, status, error_code, error_message, started_at, finished_at, created_at, updated_at",
+      "id, document_id, job_kind, status, error_code, error_message, progress_message, progress_metadata, steps_completed, steps_total, started_at, finished_at, created_at, updated_at",
     )
     .eq("workspace_id", workspaceId)
     .in("document_id", documentIds)
@@ -179,7 +213,7 @@ export async function getWorkspaceDocument(
   const { data: document, error: documentError } = await supabase
     .from("documents")
     .select(
-      "id, title, description, summary, storage_bucket, storage_path, mime_type, file_extension, size_bytes, checksum_sha256, page_count, token_count, status, metadata, created_at, updated_at",
+      "id, title, description, summary, storage_bucket, storage_path, mime_type, file_extension, size_bytes, checksum_sha256, page_count, token_count, chunk_count, extracted_char_count, embedding_provider, embedding_model, indexed_at, last_ingested_at, status, metadata, created_at, updated_at",
     )
     .eq("workspace_id", workspaceId)
     .eq("id", documentId)
@@ -196,7 +230,7 @@ export async function getWorkspaceDocument(
   const { data: jobs, error: jobsError } = await supabase
     .from("ingestion_jobs")
     .select(
-      "id, document_id, job_kind, status, error_code, error_message, started_at, finished_at, created_at, updated_at",
+      "id, document_id, job_kind, status, error_code, error_message, progress_message, progress_metadata, steps_completed, steps_total, started_at, finished_at, created_at, updated_at",
     )
     .eq("workspace_id", workspaceId)
     .eq("document_id", documentId)
@@ -297,19 +331,39 @@ export async function insertDocumentIngestionJob(input: {
   documentId: string;
   jobKind: IngestionJobKind;
   payload?: Record<string, unknown>;
+  progressMessage?: string;
   requestedBy: string;
+  stepsTotal?: number;
   workspaceId: string;
-}) {
+}): Promise<{ data: QueuedIngestionJob | null; error: { message: string } | null }> {
   const supabase = await createServerSupabaseClient();
+  const { data, error } = await supabase
+    .from("ingestion_jobs")
+    .insert({
+      document_id: input.documentId,
+      job_kind: input.jobKind,
+      payload: input.payload ?? {},
+      progress_message: input.progressMessage ?? "Queued for processing.",
+      requested_by: input.requestedBy,
+      status: "queued",
+      steps_completed: 0,
+      steps_total: input.stepsTotal ?? 7,
+      workspace_id: input.workspaceId,
+    })
+    .select("id, document_id, status, created_at")
+    .single();
 
-  return supabase.from("ingestion_jobs").insert({
-    document_id: input.documentId,
-    job_kind: input.jobKind,
-    payload: input.payload ?? {},
-    requested_by: input.requestedBy,
-    status: "queued",
-    workspace_id: input.workspaceId,
-  });
+  return {
+    data: data
+      ? {
+          createdAt: (data as InsertedJobRow).created_at,
+          documentId: (data as InsertedJobRow).document_id,
+          id: (data as InsertedJobRow).id,
+          status: (data as InsertedJobRow).status,
+        }
+      : null,
+    error: error ? { message: error.message } : null,
+  };
 }
 
 export { DOCUMENT_BUCKET };

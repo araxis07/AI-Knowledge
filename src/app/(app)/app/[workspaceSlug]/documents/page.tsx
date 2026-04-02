@@ -1,6 +1,8 @@
 import Link from "next/link";
 
 import { DocumentActionForms } from "@/components/documents/document-action-forms";
+import { DocumentIngestionAutoRefresh } from "@/components/documents/document-ingestion-auto-refresh";
+import { DocumentIngestionProgress } from "@/components/documents/document-ingestion-progress";
 import { DocumentStatusBadge } from "@/components/documents/document-status-badge";
 import { DocumentUploadPanel } from "@/components/documents/document-upload-panel";
 import { Badge } from "@/components/ui/badge";
@@ -23,6 +25,7 @@ import {
 } from "@/lib/documents";
 import { asRoute } from "@/lib/utils/as-route";
 import { formatBytes } from "@/lib/utils/format-bytes";
+import { isDocumentJobActive } from "@/lib/utils/document-ingestion";
 import { getSearchParamValue } from "@/lib/utils/search-param-value";
 import { formatWorkspaceRoleLabel } from "@/lib/utils/workspace-labels";
 import { hasMinimumWorkspaceRole, requireWorkspaceAccess } from "@/lib/workspaces";
@@ -76,6 +79,7 @@ export default async function WorkspaceDocumentsPage({
 
   return (
     <div className="space-y-6">
+      <DocumentIngestionAutoRefresh active={documents.some((document) => isDocumentJobActive(document.latestJob))} />
       <PageHeader
         actions={
           canManageDocuments ? (
@@ -206,10 +210,15 @@ export default async function WorkspaceDocumentsPage({
                         <span>{formatBytes(document.sizeBytes)}</span>
                         <span>Updated {formatTimestamp(document.updatedAt)}</span>
                         {document.pageCount ? <span>{document.pageCount} pages</span> : null}
+                        {document.chunkCount ? <span>{document.chunkCount} chunks</span> : null}
                         {document.latestJob?.status ? (
                           <span>Latest job: {document.latestJob.status}</span>
                         ) : null}
                       </div>
+
+                      {document.latestJob && isDocumentJobActive(document.latestJob) ? (
+                        <DocumentIngestionProgress className="mt-4" job={document.latestJob} />
+                      ) : null}
 
                       {document.latestJob?.errorMessage ? (
                         <p className="mt-3 rounded-[1rem] border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">

@@ -18,7 +18,21 @@ const publicEnvSchema = z.object({
 });
 
 const serverEnvSchema = z.object({
+  AI_EMBEDDING_PROVIDER: z.preprocess(
+    emptyStringToUndefined,
+    z.enum(["openai"]).optional(),
+  ),
+  AI_OPENAI_BASE_URL: z.preprocess(emptyStringToUndefined, z.string().url().optional()),
+  AI_OPENAI_EMBEDDING_DIMENSIONS: z.preprocess(
+    emptyStringToUndefined,
+    z.coerce.number().int().positive().optional(),
+  ),
+  AI_OPENAI_EMBEDDING_MODEL: z.preprocess(
+    emptyStringToUndefined,
+    z.string().min(1).optional(),
+  ),
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
+  OPENAI_API_KEY: z.preprocess(emptyStringToUndefined, z.string().min(1).optional()),
   SUPABASE_SERVICE_ROLE_KEY: z.preprocess(
     emptyStringToUndefined,
     z.string().min(1).optional(),
@@ -39,7 +53,12 @@ export function readPublicEnv(): PublicEnv {
 
 export function readServerEnv(): ServerEnv {
   return serverEnvSchema.parse({
+    AI_EMBEDDING_PROVIDER: process.env.AI_EMBEDDING_PROVIDER,
+    AI_OPENAI_BASE_URL: process.env.AI_OPENAI_BASE_URL,
+    AI_OPENAI_EMBEDDING_DIMENSIONS: process.env.AI_OPENAI_EMBEDDING_DIMENSIONS,
+    AI_OPENAI_EMBEDDING_MODEL: process.env.AI_OPENAI_EMBEDDING_MODEL,
     NODE_ENV: process.env.NODE_ENV,
+    OPENAI_API_KEY: process.env.OPENAI_API_KEY,
     SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
   });
 }

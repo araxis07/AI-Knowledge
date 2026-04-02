@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { after } from "next/server";
 
 import {
   insertDocumentActivityLog,
@@ -13,6 +14,10 @@ import { asRoute } from "@/lib/utils/as-route";
 import { formDataString } from "@/lib/action-utils";
 import { mutateDocumentSchema } from "@/lib/validation/documents";
 import { findWorkspaceAccessBySlug, hasMinimumWorkspaceRole } from "@/lib/workspaces";
+import {
+  getIngestionWorkerAvailability,
+  runQueuedIngestionJob,
+} from "@/server/ingestion/run-job";
 
 function documentRedirectPath(workspaceSlug: string, documentId?: string) {
   if (documentId) {
@@ -151,6 +156,8 @@ export async function deleteDocumentAction(formData: FormData) {
 export async function reprocessDocumentAction(formData: FormData) {
   const context = await requireEditableWorkspaceDocument(formData);
   const nextPath = documentRedirectPath(context.parsed.workspaceSlug, context.document.id);
+  const workerAvailability = getIngestionWorkerAvailability();
+  const queuedProgressMessage = workerAvailability.ready ? null : workerAvailability.message;
 
   if (context.document.status === "archived") {
     redirect(asRoute(`${nextPath}?documents=archived-readonly`));
@@ -174,7 +181,7 @@ export async function reprocessDocumentAction(formData: FormData) {
   }
 
   const jobKind = context.document.status === "indexed" ? "reindex" : "extract";
-  const { error: jobError } = await insertDocumentIngestionJob({
+  const { data: queuedJob, error: jobError } = await insertDocumentIngestionJob({
     documentId: context.document.id,
     jobKind,
     payload: {
@@ -182,6 +189,7 @@ export async function reprocessDocumentAction(formData: FormData) {
       storagePath: context.document.storage_path,
       title: context.document.title,
     },
+    ...(queuedProgressMessage ? { progressMessage: queuedProgressMessage } : {}),
     requestedBy: context.user.id,
     workspaceId: context.parsed.workspaceId,
   });
@@ -190,11 +198,35 @@ export async function reprocessDocumentAction(formData: FormData) {
     redirect(asRoute(`${nextPath}?documents=queue-error`));
   }
 
+  await context.supabase
+    .from("documents")
+    .update({
+      status: "queued",
+    })
+    .eq("workspace_id", context.parsed.workspaceId)
+    .eq("id", context.document.id);
+
+  const backgroundProcessingStarted = Boolean(queuedJob && workerAvailability.ready);
+
+  if (backgroundProcessingStarted && queuedJob) {
+    after(async () => {
+      try {
+        await runQueuedIngestionJob(queuedJob.id);
+      } catch (error) {
+        console.error("Failed to execute queued reprocessing job.", {
+          error,
+          jobId: queuedJob.id,
+        });
+      }
+    });
+  }
+
   await insertDocumentActivityLog({
     action: "document.reprocess_queued",
     actorUserId: context.user.id,
     entityId: context.document.id,
     payload: {
+      dispatchStatus: backgroundProcessingStarted ? "started" : "queued",
       jobKind,
       title: context.document.title,
     },
