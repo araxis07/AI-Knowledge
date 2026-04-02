@@ -5,13 +5,24 @@ import { SignUpForm } from "@/components/auth/sign-up-form";
 import { Container } from "@/components/ui/container";
 import { getCurrentUser } from "@/lib/auth";
 import { asRoute } from "@/lib/utils/as-route";
+import { getSearchParamValue } from "@/lib/utils/search-param-value";
+import { sanitizeRedirectPath } from "@/lib/utils/sanitize-redirect-path";
 
-export default async function SignUpPage() {
+type SignUpPageProps = {
+  searchParams: Promise<{
+    next?: string | string[];
+  }>;
+};
+
+export default async function SignUpPage({ searchParams }: SignUpPageProps) {
   const user = await getCurrentUser();
 
   if (user) {
     redirect(asRoute("/app"));
   }
+
+  const resolvedSearchParams = await searchParams;
+  const next = sanitizeRedirectPath(getSearchParamValue(resolvedSearchParams.next), "/app");
 
   return (
     <Container className="py-16 sm:py-20">
@@ -20,7 +31,7 @@ export default async function SignUpPage() {
         eyebrow="Get started"
         title="Create your account."
       >
-        <SignUpForm />
+        <SignUpForm next={next} />
       </AuthPanel>
     </Container>
   );

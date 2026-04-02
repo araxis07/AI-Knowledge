@@ -1,8 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
-import { useEffect, startTransition, useActionState } from "react";
+import { startTransition, useActionState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
@@ -14,9 +13,11 @@ import { asRoute } from "@/lib/utils/as-route";
 import { sanitizeRedirectPath } from "@/lib/utils/sanitize-redirect-path";
 import { signUpSchema, type SignUpInput } from "@/lib/validation/auth";
 
-export function SignUpForm() {
-  const searchParams = useSearchParams();
-  const next = sanitizeRedirectPath(searchParams.get("next"), "/app");
+type SignUpFormProps = {
+  next: string;
+};
+
+export function SignUpForm({ next }: SignUpFormProps) {
   const [serverState, dispatch, isPending] = useActionState(signUpAction, idleFormActionState);
   const form = useForm<SignUpInput>({
     defaultValues: {
@@ -28,13 +29,6 @@ export function SignUpForm() {
     },
     resolver: zodResolver(signUpSchema),
   });
-
-  useEffect(() => {
-    form.setValue("next", next, {
-      shouldDirty: false,
-      shouldValidate: false,
-    });
-  }, [form, next]);
 
   const errors = {
     confirmPassword:
@@ -62,7 +56,11 @@ export function SignUpForm() {
         });
       })}
     >
-      <input type="hidden" {...form.register("next")} value={next} />
+      <input
+        type="hidden"
+        {...form.register("next")}
+        value={sanitizeRedirectPath(next, "/app")}
+      />
 
       {serverState.message && (
         <div className="rounded-[1.25rem] border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">

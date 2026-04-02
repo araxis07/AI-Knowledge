@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
 import { startTransition, useActionState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -14,11 +13,13 @@ import { asRoute } from "@/lib/utils/as-route";
 import { sanitizeRedirectPath } from "@/lib/utils/sanitize-redirect-path";
 import { signInSchema, type SignInInput } from "@/lib/validation/auth";
 
-export function SignInForm() {
-  const searchParams = useSearchParams();
-  const next = sanitizeRedirectPath(searchParams.get("next"), "/app");
-  const message = searchParams.get("message");
-  const authError = searchParams.get("auth_error");
+type SignInFormProps = {
+  authError?: string | null;
+  message?: string | null;
+  next: string;
+};
+
+export function SignInForm({ authError = null, message = null, next }: SignInFormProps) {
   const [serverState, dispatch, isPending] = useActionState(signInAction, idleFormActionState);
   const form = useForm<SignInInput>({
     defaultValues: {
@@ -49,7 +50,11 @@ export function SignInForm() {
         });
       })}
     >
-      <input type="hidden" {...form.register("next")} value={next} />
+      <input
+        type="hidden"
+        {...form.register("next")}
+        value={sanitizeRedirectPath(next, "/app")}
+      />
 
       {(message === "check-email" || authError === "callback_exchange_failed" || serverState.message) && (
         <div className="rounded-[1.25rem] border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
