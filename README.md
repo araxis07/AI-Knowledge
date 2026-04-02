@@ -2,7 +2,7 @@
 
 Production-oriented scaffold for a full-stack AI knowledge base and semantic document search platform built with Next.js App Router, TypeScript, Tailwind CSS, and a Supabase-first backend architecture.
 
-This repository currently contains Phase 1 foundation only. Business features such as auth, workspaces, document ingestion, search, and grounded chat are intentionally deferred to later phases.
+This repository currently contains Phase 2 foundation: the original scaffold plus real Supabase Auth integration, protected application routes, user profile sync, workspace creation, role-aware navigation, and a workspace settings foundation.
 
 ## Stack
 
@@ -13,7 +13,7 @@ This repository currently contains Phase 1 foundation only. Business features su
 - ESLint 9 with `eslint-config-next`
 - Zod 4.3.6
 
-## Included In Phase 1
+## Included Now
 
 - App Router scaffold
 - strict TypeScript configuration
@@ -21,6 +21,11 @@ This repository currently contains Phase 1 foundation only. Business features su
 - flat ESLint configuration
 - production-leaning base app shell
 - Supabase SSR/auth foundation for App Router
+- real sign in, sign up, and sign out flows with Supabase Auth
+- protected `/app` routes with server-side guards
+- profile sync for authenticated users
+- workspace creation, switching, and settings foundation
+- role-aware workspace access for `owner`, `admin`, `editor`, and `viewer`
 - initial SQL migrations with RLS, pgvector, and full-text search support
 - health endpoints
 - environment template
@@ -28,12 +33,11 @@ This repository currently contains Phase 1 foundation only. Business features su
 
 ## Not Included Yet
 
-- authentication
-- workspace management
 - document upload or storage integration
 - embeddings or vector search
 - AI chat and citations
-- Supabase runtime integration
+- member invitation workflows
+- document ingestion jobs and retrieval UX
 
 ## Requirements
 
@@ -79,14 +83,20 @@ SUPABASE_SERVICE_ROLE_KEY=
 ```text
 src/
   app/
+    (public)/
+    (app)/app/
+    actions/
     api/health/
     auth/callback/
   components/
+    auth/
     layout/
     ui/
+    workspaces/
   lib/
     supabase/
     utils/
+    validation/
 supabase/
   migrations/
 ```
@@ -102,7 +112,7 @@ GitHub Actions runs:
 
 ## Next Phases
 
-1. Auth, profiles, workspaces, and RLS foundations
+1. Member invitations and richer workspace administration
 2. Document upload and ingestion pipeline
 3. Hybrid semantic search
 4. Grounded AI Q&A with citations

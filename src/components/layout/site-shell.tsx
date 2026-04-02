@@ -4,9 +4,11 @@ import { SiteHeader } from "@/components/layout/site-header";
 
 type SiteShellProps = {
   children: ReactNode;
+  actions?: ReactNode;
+  caption?: string;
 };
 
-export function SiteShell({ children }: SiteShellProps) {
+export function SiteShell({ actions, caption, children }: SiteShellProps) {
   return (
     <div className="min-h-screen bg-[var(--app-background)] text-[var(--app-foreground)]">
       <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
@@ -14,7 +16,7 @@ export function SiteShell({ children }: SiteShellProps) {
         <div className="absolute right-[-10rem] top-28 h-80 w-80 rounded-full bg-teal-400/12 blur-3xl" />
         <div className="absolute left-[-8rem] top-72 h-72 w-72 rounded-full bg-cyan-500/10 blur-3xl" />
       </div>
-      <SiteHeader />
+      <SiteHeader actions={actions} {...(caption ? { caption } : {})} />
       <main>{children}</main>
     </div>
   );

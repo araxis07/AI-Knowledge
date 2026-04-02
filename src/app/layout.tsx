@@ -1,7 +1,5 @@
 import type { Metadata, Viewport } from "next";
 
-import { SiteShell } from "@/components/layout/site-shell";
-
 import "./globals.css";
 
 const metadataBaseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
@@ -31,9 +29,7 @@ type RootLayoutProps = Readonly<{
 export default function RootLayout({ children }: RootLayoutProps) {
   return (
     <html lang="en">
-      <body>
-        <SiteShell>{children}</SiteShell>
-      </body>
+      <body>{children}</body>
     </html>
   );
 }

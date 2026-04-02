@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { Container } from "@/components/ui/container";
+import { asRoute } from "@/lib/utils/as-route";
 
 export default function NotFound() {
   return (
@@ -14,7 +15,7 @@ export default function NotFound() {
         verify the app shell and health routes.
       </p>
       <Link
-        href="/"
+        href={asRoute("/")}
         className="mt-8 inline-flex items-center rounded-full bg-teal-700 px-5 py-3 text-sm font-semibold text-white transition hover:bg-teal-800"
       >
         Return home

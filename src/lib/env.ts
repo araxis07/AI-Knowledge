@@ -1,15 +1,28 @@
 import { z } from "zod";
 
+function emptyStringToUndefined(value: unknown) {
+  return typeof value === "string" && value.trim().length === 0 ? undefined : value;
+}
+
 const publicEnvSchema = z.object({
   NEXT_PUBLIC_APP_URL: z.string().url().default("http://localhost:3000"),
-  NEXT_PUBLIC_SUPABASE_URL: z.string().url().optional(),
-  NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: z.string().min(1).optional(),
-  NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().min(1).optional(),
+  NEXT_PUBLIC_SUPABASE_URL: z.preprocess(emptyStringToUndefined, z.string().url().optional()),
+  NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: z.preprocess(
+    emptyStringToUndefined,
+    z.string().min(1).optional(),
+  ),
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: z.preprocess(
+    emptyStringToUndefined,
+    z.string().min(1).optional(),
+  ),
 });
 
 const serverEnvSchema = z.object({
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
-  SUPABASE_SERVICE_ROLE_KEY: z.string().min(1).optional(),
+  SUPABASE_SERVICE_ROLE_KEY: z.preprocess(
+    emptyStringToUndefined,
+    z.string().min(1).optional(),
+  ),
 });
 
 export type PublicEnv = z.infer<typeof publicEnvSchema>;
