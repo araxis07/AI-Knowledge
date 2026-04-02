@@ -64,6 +64,60 @@ export function hasMinimumWorkspaceRole(
   return workspaceRoleRank[role] >= workspaceRoleRank[minimumRole];
 }
 
+export async function findWorkspaceAccessBySlug(
+  workspaceSlug: string,
+  userId: string,
+): Promise<WorkspaceAccess | null> {
+  const supabase = await createServerSupabaseClient();
+  const { data, error } = await supabase
+    .from("workspaces")
+    .select(
+      `
+        id,
+        slug,
+        name,
+        description,
+        created_by,
+        settings,
+        created_at,
+        updated_at,
+        workspace_members!inner (
+          id,
+          user_id,
+          role,
+          created_at,
+          updated_at
+        )
+      `,
+    )
+    .eq("slug", workspaceSlug)
+    .eq("workspace_members.user_id", userId)
+    .maybeSingle();
+
+  if (error || !data) {
+    return null;
+  }
+
+  const membership = Array.isArray(data.workspace_members)
+    ? data.workspace_members[0]
+    : data.workspace_members;
+
+  if (!membership) {
+    return null;
+  }
+
+  const role = membership.role as WorkspaceRole;
+
+  return {
+    membershipId: String(membership.id),
+    role,
+    workspace: {
+      ...mapWorkspaceSummary(data as Record<string, unknown>, role),
+      createdBy: String(data.created_by),
+    },
+  };
+}
+
 export async function listCurrentUserWorkspaces(): Promise<WorkspaceSummary[]> {
   const user = await requireAuthenticatedUser("/app");
   const supabase = await createServerSupabaseClient();
@@ -112,58 +166,17 @@ export async function getWorkspaceAccessBySlug(
   minimumRole: WorkspaceRole = "viewer",
 ): Promise<WorkspaceAccess> {
   const user = await requireAuthenticatedUser(`/app/${workspaceSlug}`);
-  const supabase = await createServerSupabaseClient();
-  const { data, error } = await supabase
-    .from("workspaces")
-    .select(
-      `
-        id,
-        slug,
-        name,
-        description,
-        created_by,
-        settings,
-        created_at,
-        updated_at,
-        workspace_members!inner (
-          id,
-          user_id,
-          role,
-          created_at,
-          updated_at
-        )
-      `,
-    )
-    .eq("slug", workspaceSlug)
-    .eq("workspace_members.user_id", user.id)
-    .single();
+  const access = await findWorkspaceAccessBySlug(workspaceSlug, user.id);
 
-  if (error || !data) {
+  if (!access) {
     notFound();
   }
 
-  const membership = Array.isArray(data.workspace_members)
-    ? data.workspace_members[0]
-    : data.workspace_members;
-
-  if (!membership) {
-    notFound();
-  }
-
-  const role = membership.role as WorkspaceRole;
-
-  if (!hasMinimumWorkspaceRole(role, minimumRole)) {
+  if (!hasMinimumWorkspaceRole(access.role, minimumRole)) {
     redirect(asRoute(`/app/${workspaceSlug}`));
   }
 
-  return {
-    membershipId: String(membership.id),
-    role,
-    workspace: {
-      ...mapWorkspaceSummary(data as Record<string, unknown>, role),
-      createdBy: String(data.created_by),
-    },
-  };
+  return access;
 }
 
 export const requireWorkspaceAccess = getWorkspaceAccessBySlug;

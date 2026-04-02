@@ -116,3 +116,74 @@ export function ArrowUpRightIcon(props: IconProps) {
     </IconBase>
   );
 }
+
+export function UploadIcon(props: IconProps) {
+  return (
+    <IconBase {...props}>
+      <path d="M12 16.5V5.5" />
+      <path d="m7.75 9.75 4.25-4.25 4.25 4.25" />
+      <path d="M4 18.5h16" />
+    </IconBase>
+  );
+}
+
+export function RefreshIcon(props: IconProps) {
+  return (
+    <IconBase {...props}>
+      <path d="M20 7.5V4h-3.5" />
+      <path d="M4 16.5V20h3.5" />
+      <path d="M18.2 10A6.75 6.75 0 0 0 6.4 6.1L4 8.25" />
+      <path d="M5.8 14A6.75 6.75 0 0 0 17.6 17.9l2.4-2.15" />
+    </IconBase>
+  );
+}
+
+export function ArchiveIcon(props: IconProps) {
+  return (
+    <IconBase {...props}>
+      <path d="M4 6.25h16v3.5H4z" />
+      <path d="M5.5 9.75v9.5h13v-9.5" />
+      <path d="M10 13h4" />
+    </IconBase>
+  );
+}
+
+export function TrashIcon(props: IconProps) {
+  return (
+    <IconBase {...props}>
+      <path d="M5.5 7.25h13" />
+      <path d="M9 7.25V5.5a1.5 1.5 0 0 1 1.5-1.5h2A1.5 1.5 0 0 1 14 5.5v1.75" />
+      <path d="M7 7.25v11A1.75 1.75 0 0 0 8.75 20h5.5A1.75 1.75 0 0 0 16 18.25v-11" />
+      <path d="M10 11v5.5" />
+      <path d="M14 11v5.5" />
+    </IconBase>
+  );
+}
+
+export function DownloadIcon(props: IconProps) {
+  return (
+    <IconBase {...props}>
+      <path d="M12 4v10.5" />
+      <path d="m7.75 10.25 4.25 4.25 4.25-4.25" />
+      <path d="M4 19.5h16" />
+    </IconBase>
+  );
+}
+
+export function ClockIcon(props: IconProps) {
+  return (
+    <IconBase {...props}>
+      <circle cx="12" cy="12" r="8.25" />
+      <path d="M12 7.75V12l3 2" />
+    </IconBase>
+  );
+}
+
+export function CheckCircleIcon(props: IconProps) {
+  return (
+    <IconBase {...props}>
+      <circle cx="12" cy="12" r="8.25" />
+      <path d="m8.5 12.25 2.25 2.25 4.75-5" />
+    </IconBase>
+  );
+}
