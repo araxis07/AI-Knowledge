@@ -20,6 +20,8 @@ This repository currently contains Phase 1 foundation only. Business features su
 - Tailwind CSS v4 setup
 - flat ESLint configuration
 - production-leaning base app shell
+- Supabase SSR/auth foundation for App Router
+- initial SQL migrations with RLS, pgvector, and full-text search support
 - health endpoints
 - environment template
 - GitHub Actions CI foundation
@@ -65,10 +67,12 @@ The scaffold keeps environment requirements minimal for now:
 ```bash
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
 ```
 
-`SUPABASE_SERVICE_ROLE_KEY` and any AI provider secrets are intentionally not introduced in Phase 1.
+`NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` is the preferred public key. `NEXT_PUBLIC_SUPABASE_ANON_KEY` is kept as a compatibility fallback during Supabase's key transition. `SUPABASE_SERVICE_ROLE_KEY` is only for trusted server-side workflows and must never be exposed to the browser.
 
 ## Project Structure
 
@@ -76,11 +80,15 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=
 src/
   app/
     api/health/
+    auth/callback/
   components/
     layout/
     ui/
   lib/
+    supabase/
     utils/
+supabase/
+  migrations/
 ```
 
 ## CI
