@@ -1,3 +1,5 @@
+create schema if not exists private;
+
 create or replace function private.storage_workspace_id(object_name text)
 returns uuid
 language plpgsql
@@ -16,6 +18,44 @@ begin
 
   return folder::uuid;
 end;
+$$;
+
+create or replace function private.storage_is_workspace_member(object_name text)
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select exists (
+    select 1
+    from public.workspace_members wm
+    where wm.workspace_id = private.storage_workspace_id(object_name)
+      and wm.user_id = auth.uid()
+  );
+$$;
+
+create or replace function private.storage_has_workspace_editor_access(object_name text)
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select coalesce(
+    (
+      select wm.role in (
+        'editor'::public.workspace_role,
+        'admin'::public.workspace_role,
+        'owner'::public.workspace_role
+      )
+      from public.workspace_members wm
+      where wm.workspace_id = private.storage_workspace_id(object_name)
+        and wm.user_id = auth.uid()
+      limit 1
+    ),
+    false
+  );
 $$;
 
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
@@ -44,7 +84,7 @@ for select
 to authenticated
 using (
   bucket_id = 'documents'
-  and private.is_workspace_member(private.storage_workspace_id(name))
+  and private.storage_is_workspace_member(name)
 );
 
 drop policy if exists documents_bucket_insert_editor on storage.objects;
@@ -54,7 +94,7 @@ for insert
 to authenticated
 with check (
   bucket_id = 'documents'
-  and private.has_workspace_role(private.storage_workspace_id(name), 'editor')
+  and private.storage_has_workspace_editor_access(name)
 );
 
 drop policy if exists documents_bucket_update_editor on storage.objects;
@@ -64,11 +104,11 @@ for update
 to authenticated
 using (
   bucket_id = 'documents'
-  and private.has_workspace_role(private.storage_workspace_id(name), 'editor')
+  and private.storage_has_workspace_editor_access(name)
 )
 with check (
   bucket_id = 'documents'
-  and private.has_workspace_role(private.storage_workspace_id(name), 'editor')
+  and private.storage_has_workspace_editor_access(name)
 );
 
 drop policy if exists documents_bucket_delete_editor on storage.objects;
@@ -78,5 +118,5 @@ for delete
 to authenticated
 using (
   bucket_id = 'documents'
-  and private.has_workspace_role(private.storage_workspace_id(name), 'editor')
+  and private.storage_has_workspace_editor_access(name)
 );
