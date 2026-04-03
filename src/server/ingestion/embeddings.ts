@@ -52,6 +52,7 @@ class OpenAIEmbeddingProvider implements EmbeddingProvider {
         "Content-Type": "application/json",
       },
       method: "POST",
+      signal: AbortSignal.timeout(60_000),
     });
 
     if (!response.ok) {

@@ -35,6 +35,7 @@
 - Enable the optional Playwright E2E workflow only after storing the required Supabase secrets in GitHub.
 - Enable provider-backed Playwright tests only after storing `OPENAI_API_KEY` and accepting external model cost.
 - Review Playwright failure artifacts before re-running a broken pipeline.
+- If you use self-hosted GitHub runners, keep the Actions Runner version at `2.327.1` or newer for the current Node 24 action versions.
 
 ## Launch Review
 
