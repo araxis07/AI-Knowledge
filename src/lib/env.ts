@@ -18,11 +18,19 @@ const publicEnvSchema = z.object({
 });
 
 const serverEnvSchema = z.object({
+  AI_CHAT_PROVIDER: z.preprocess(
+    emptyStringToUndefined,
+    z.enum(["openai"]).optional(),
+  ),
   AI_EMBEDDING_PROVIDER: z.preprocess(
     emptyStringToUndefined,
     z.enum(["openai"]).optional(),
   ),
   AI_OPENAI_BASE_URL: z.preprocess(emptyStringToUndefined, z.string().url().optional()),
+  AI_OPENAI_CHAT_MODEL: z.preprocess(
+    emptyStringToUndefined,
+    z.string().min(1).optional(),
+  ),
   AI_OPENAI_EMBEDDING_DIMENSIONS: z.preprocess(
     emptyStringToUndefined,
     z.coerce.number().int().positive().optional(),
@@ -53,8 +61,10 @@ export function readPublicEnv(): PublicEnv {
 
 export function readServerEnv(): ServerEnv {
   return serverEnvSchema.parse({
+    AI_CHAT_PROVIDER: process.env.AI_CHAT_PROVIDER,
     AI_EMBEDDING_PROVIDER: process.env.AI_EMBEDDING_PROVIDER,
     AI_OPENAI_BASE_URL: process.env.AI_OPENAI_BASE_URL,
+    AI_OPENAI_CHAT_MODEL: process.env.AI_OPENAI_CHAT_MODEL,
     AI_OPENAI_EMBEDDING_DIMENSIONS: process.env.AI_OPENAI_EMBEDDING_DIMENSIONS,
     AI_OPENAI_EMBEDDING_MODEL: process.env.AI_OPENAI_EMBEDDING_MODEL,
     NODE_ENV: process.env.NODE_ENV,

@@ -2,7 +2,7 @@
 
 Production-oriented full-stack foundation for an AI knowledge base and semantic document search platform built with Next.js App Router, TypeScript, Tailwind CSS, and a Supabase-first backend architecture.
 
-This repository currently contains the product shell, real Supabase Auth, workspace management, document library uploads, an asynchronous ingestion foundation, and hybrid workspace search backed by pgvector and PostgreSQL full-text search.
+This repository currently contains the product shell, real Supabase Auth, workspace management, document library uploads, an asynchronous ingestion foundation, hybrid workspace search, and grounded AI Q&A with visible citations backed by pgvector and PostgreSQL full-text search.
 
 ## Stack
 
@@ -37,15 +37,19 @@ This repository currently contains the product shell, real Supabase Auth, worksp
 - workspace search UI with hybrid, semantic, and keyword retrieval modes
 - pgvector similarity search fused with PostgreSQL full-text ranking
 - document, tag, and date filters for workspace search
+- grounded workspace Q&A that refuses to answer without retrieved context
+- visible citation cards with cited document names and chunk previews
+- conversation history foundation for saved grounded threads
+- swappable chat provider adapter foundation with an OpenAI Responses API implementation
 - health endpoints
 - environment template
 - GitHub Actions CI foundation
 
 ## Not Included Yet
 
-- AI chat and citations
 - member invitation workflows
 - extraction workers outside the Next.js runtime
+- richer conversation management controls beyond the initial thread foundation
 
 ## Requirements
 
@@ -82,8 +86,10 @@ NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
+AI_CHAT_PROVIDER=openai
 AI_EMBEDDING_PROVIDER=openai
 AI_OPENAI_BASE_URL=https://api.openai.com/v1
+AI_OPENAI_CHAT_MODEL=gpt-5.2
 AI_OPENAI_EMBEDDING_MODEL=text-embedding-3-small
 AI_OPENAI_EMBEDDING_DIMENSIONS=1536
 OPENAI_API_KEY=
@@ -92,6 +98,8 @@ OPENAI_API_KEY=
 `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` is the preferred public key. `NEXT_PUBLIC_SUPABASE_ANON_KEY` is kept as a compatibility fallback during Supabase's key transition. `SUPABASE_SERVICE_ROLE_KEY` is only for trusted server-side workflows and must never be exposed to the browser.
 
 The ingestion worker runs after the request completes by using Next.js server-side background callbacks. It needs `SUPABASE_SERVICE_ROLE_KEY` to read storage and write chunks, and it needs `OPENAI_API_KEY` to generate embeddings with the default provider.
+
+Grounded AI answers use the same `OPENAI_API_KEY`, plus `AI_CHAT_PROVIDER` and `AI_OPENAI_CHAT_MODEL`, and they always retrieve workspace chunks before the model is called.
 
 ## Project Structure
 
@@ -105,16 +113,22 @@ src/
     auth/callback/
   components/
     auth/
+    conversations/
     documents/
     layout/
+    search/
     ui/
     workspaces/
   lib/
+    types/
     supabase/
     utils/
     validation/
   server/
+    ai/
+    conversations/
     ingestion/
+    search/
 supabase/
   migrations/
 ```
@@ -130,7 +144,7 @@ GitHub Actions runs:
 
 ## Next Phases
 
-1. Grounded AI Q&A with citations
-2. Member invitations and richer workspace administration
-3. Search history, saved searches, and analytics
-4. E2E coverage for document, ingestion, and search flows
+1. Member invitations and richer workspace administration
+2. Search history, saved searches, and analytics
+3. E2E coverage for document, ingestion, search, and grounded Q&A flows
+4. Optional async worker isolation outside the Next.js runtime
