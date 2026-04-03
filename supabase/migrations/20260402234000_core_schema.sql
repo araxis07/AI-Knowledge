@@ -467,66 +467,79 @@ create index if not exists activity_logs_actor_created_at_idx
 create index if not exists activity_logs_entity_idx
   on public.activity_logs (workspace_id, entity_type, entity_id);
 
+drop trigger if exists profiles_set_updated_at on public.profiles;
 create trigger profiles_set_updated_at
 before update on public.profiles
 for each row
 execute function public.set_current_timestamp_updated_at();
 
+drop trigger if exists workspaces_set_updated_at on public.workspaces;
 create trigger workspaces_set_updated_at
 before update on public.workspaces
 for each row
 execute function public.set_current_timestamp_updated_at();
 
+drop trigger if exists workspace_members_set_updated_at on public.workspace_members;
 create trigger workspace_members_set_updated_at
 before update on public.workspace_members
 for each row
 execute function public.set_current_timestamp_updated_at();
 
+drop trigger if exists documents_set_updated_at on public.documents;
 create trigger documents_set_updated_at
 before update on public.documents
 for each row
 execute function public.set_current_timestamp_updated_at();
 
+drop trigger if exists document_tags_set_updated_at on public.document_tags;
 create trigger document_tags_set_updated_at
 before update on public.document_tags
 for each row
 execute function public.set_current_timestamp_updated_at();
 
+drop trigger if exists document_tag_links_set_updated_at on public.document_tag_links;
 create trigger document_tag_links_set_updated_at
 before update on public.document_tag_links
 for each row
 execute function public.set_current_timestamp_updated_at();
 
+drop trigger if exists ingestion_jobs_set_updated_at on public.ingestion_jobs;
 create trigger ingestion_jobs_set_updated_at
 before update on public.ingestion_jobs
 for each row
 execute function public.set_current_timestamp_updated_at();
 
+drop trigger if exists document_chunks_set_updated_at on public.document_chunks;
 create trigger document_chunks_set_updated_at
 before update on public.document_chunks
 for each row
 execute function public.set_current_timestamp_updated_at();
 
+drop trigger if exists conversations_set_updated_at on public.conversations;
 create trigger conversations_set_updated_at
 before update on public.conversations
 for each row
 execute function public.set_current_timestamp_updated_at();
 
+drop trigger if exists conversation_messages_set_updated_at on public.conversation_messages;
 create trigger conversation_messages_set_updated_at
 before update on public.conversation_messages
 for each row
 execute function public.set_current_timestamp_updated_at();
 
+drop trigger if exists citations_set_updated_at on public.citations;
 create trigger citations_set_updated_at
 before update on public.citations
 for each row
 execute function public.set_current_timestamp_updated_at();
 
+drop trigger if exists search_history_set_updated_at on public.search_history;
 create trigger search_history_set_updated_at
 before update on public.search_history
 for each row
 execute function public.set_current_timestamp_updated_at();
 
+drop trigger if exists activity_logs_set_updated_at on public.activity_logs;
 create trigger activity_logs_set_updated_at
 before update on public.activity_logs
 for each row
