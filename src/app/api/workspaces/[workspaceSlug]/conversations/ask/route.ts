@@ -84,8 +84,22 @@ export async function POST(
       workspaceAccess,
     });
 
+    await supabase.from("activity_logs").insert({
+      action: "conversation.question_asked",
+      actor_type: "user",
+      actor_user_id: user.id,
+      entity_id: response.conversationId,
+      entity_type: "conversation",
+      payload: {
+        query: input.question,
+        retrievalCount: response.retrievalCount,
+      },
+      workspace_id: workspaceAccess.workspace.id,
+    });
+
     revalidatePath(`/app/${workspaceSlug}`);
     revalidatePath(`/app/${workspaceSlug}/conversations`);
+    revalidatePath(`/app/${workspaceSlug}/activity`);
 
     return NextResponse.json(response);
   } catch (error) {

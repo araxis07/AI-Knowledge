@@ -60,5 +60,40 @@ export async function GET(request: Request, { params }: WorkspaceSearchRouteCont
 
   const response = await searchWorkspace(access.workspace.id, search);
 
+  await supabase.from("search_history").insert({
+    actor_user_id: user.id,
+    filters: {
+      dateFrom: search.dateFrom,
+      dateTo: search.dateTo,
+      documentId: search.documentId,
+      tagId: search.tagId,
+    },
+    latency_ms: response.latencyMs,
+    metadata: {
+      effectiveMode: response.effectiveMode,
+      notice: response.notice,
+      requestedMode: response.requestedMode,
+    },
+    mode: response.effectiveMode,
+    query_text: response.query,
+    results_count: response.total,
+    workspace_id: access.workspace.id,
+  });
+
+  await supabase.from("activity_logs").insert({
+    action: "search.performed",
+    actor_type: "user",
+    actor_user_id: user.id,
+    entity_id: access.workspace.id,
+    entity_type: "workspace",
+    payload: {
+      effectiveMode: response.effectiveMode,
+      query: response.query,
+      requestedMode: response.requestedMode,
+      resultsCount: response.total,
+    },
+    workspace_id: access.workspace.id,
+  });
+
   return NextResponse.json(response);
 }

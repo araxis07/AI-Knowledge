@@ -46,6 +46,13 @@ export const updateWorkspaceMemberRoleSchema = z.object({
   workspaceSlug: workspaceSlugSchema,
 });
 
+export const removeWorkspaceMemberSchema = z.object({
+  membershipId: z.uuid("Membership ID is invalid."),
+  workspaceId: z.uuid("Workspace ID is invalid."),
+  workspaceSlug: workspaceSlugSchema,
+});
+
 export type CreateWorkspaceInput = z.infer<typeof createWorkspaceSchema>;
 export type UpdateWorkspaceMemberRoleInput = z.infer<typeof updateWorkspaceMemberRoleSchema>;
 export type UpdateWorkspaceSettingsInput = z.infer<typeof updateWorkspaceSettingsSchema>;
+export type RemoveWorkspaceMemberInput = z.infer<typeof removeWorkspaceMemberSchema>;

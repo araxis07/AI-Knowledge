@@ -2,7 +2,7 @@
 
 Production-oriented full-stack foundation for an AI knowledge base and semantic document search platform built with Next.js App Router, TypeScript, Tailwind CSS, and a Supabase-first backend architecture.
 
-This repository currently contains the product shell, real Supabase Auth, workspace management, document library uploads, an asynchronous ingestion foundation, hybrid workspace search, and grounded AI Q&A with visible citations backed by pgvector and PostgreSQL full-text search.
+This repository currently contains the product shell, real Supabase Auth, workspace management, document library uploads, an asynchronous ingestion foundation, hybrid workspace search, grounded AI Q&A with visible citations, and admin/activity foundations backed by pgvector and PostgreSQL full-text search.
 
 ## Stack
 
@@ -41,6 +41,9 @@ This repository currently contains the product shell, real Supabase Auth, worksp
 - visible citation cards with cited document names and chunk previews
 - conversation history foundation for saved grounded threads
 - swappable chat provider adapter foundation with an OpenAI Responses API implementation
+- database-backed workspace activity feed and recent search history
+- admin operational panels for usage overview and ingestion status
+- member role updates and member removal with role-aware guards
 - health endpoints
 - environment template
 - GitHub Actions CI foundation
@@ -50,6 +53,7 @@ This repository currently contains the product shell, real Supabase Auth, worksp
 - member invitation workflows
 - extraction workers outside the Next.js runtime
 - richer conversation management controls beyond the initial thread foundation
+- advanced ownership transfer and workspace deletion flows
 
 ## Requirements
 
