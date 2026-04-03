@@ -1,8 +1,15 @@
 import { NextResponse } from "next/server";
 
+import { createRequestId, jsonError, logRouteError } from "@/lib/errors/api";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { parseWorkspaceSearchParams } from "@/lib/validation/search";
 import { findWorkspaceAccessBySlug } from "@/lib/workspaces";
+import {
+  applyRateLimitHeaders,
+  createRateLimitErrorResponse,
+  enforceRateLimit,
+  RATE_LIMIT_POLICIES,
+} from "@/server/rate-limit";
 import { searchWorkspace } from "@/server/search/workspace-search";
 
 type WorkspaceSearchRouteContext = {
@@ -11,18 +18,8 @@ type WorkspaceSearchRouteContext = {
   }>;
 };
 
-function jsonError(message: string, status: number) {
-  return NextResponse.json(
-    {
-      message,
-    },
-    {
-      status,
-    },
-  );
-}
-
 export async function GET(request: Request, { params }: WorkspaceSearchRouteContext) {
+  const requestId = createRequestId();
   const { workspaceSlug } = await params;
   const supabase = await createServerSupabaseClient();
   const {
@@ -58,42 +55,69 @@ export async function GET(request: Request, { params }: WorkspaceSearchRouteCont
     return jsonError("Provide a search query with at least 2 characters.", 400);
   }
 
-  const response = await searchWorkspace(access.workspace.id, search);
-
-  await supabase.from("search_history").insert({
-    actor_user_id: user.id,
-    filters: {
-      dateFrom: search.dateFrom,
-      dateTo: search.dateTo,
-      documentId: search.documentId,
-      tagId: search.tagId,
-    },
-    latency_ms: response.latencyMs,
-    metadata: {
-      effectiveMode: response.effectiveMode,
-      notice: response.notice,
-      requestedMode: response.requestedMode,
-    },
-    mode: response.effectiveMode,
-    query_text: response.query,
-    results_count: response.total,
-    workspace_id: access.workspace.id,
+  const rateLimit = await enforceRateLimit({
+    identifier: user.id,
+    policy: RATE_LIMIT_POLICIES.workspaceSearch,
+    workspaceId: access.workspace.id,
   });
 
-  await supabase.from("activity_logs").insert({
-    action: "search.performed",
-    actor_type: "user",
-    actor_user_id: user.id,
-    entity_id: access.workspace.id,
-    entity_type: "workspace",
-    payload: {
-      effectiveMode: response.effectiveMode,
-      query: response.query,
-      requestedMode: response.requestedMode,
-      resultsCount: response.total,
-    },
-    workspace_id: access.workspace.id,
-  });
+  if (!rateLimit.allowed) {
+    return createRateLimitErrorResponse(
+      rateLimit,
+      "Too many searches were requested in this workspace. Wait a moment and try again.",
+    );
+  }
 
-  return NextResponse.json(response);
+  try {
+    const response = await searchWorkspace(access.workspace.id, search);
+
+    await Promise.allSettled([
+      supabase.from("search_history").insert({
+        actor_user_id: user.id,
+        filters: {
+          dateFrom: search.dateFrom,
+          dateTo: search.dateTo,
+          documentId: search.documentId,
+          tagId: search.tagId,
+        },
+        latency_ms: response.latencyMs,
+        metadata: {
+          effectiveMode: response.effectiveMode,
+          notice: response.notice,
+          requestedMode: response.requestedMode,
+        },
+        mode: response.effectiveMode,
+        query_text: response.query,
+        results_count: response.total,
+        workspace_id: access.workspace.id,
+      }),
+      supabase.from("activity_logs").insert({
+        action: "search.performed",
+        actor_type: "user",
+        actor_user_id: user.id,
+        entity_id: access.workspace.id,
+        entity_type: "workspace",
+        payload: {
+          effectiveMode: response.effectiveMode,
+          query: response.query,
+          requestedMode: response.requestedMode,
+          resultsCount: response.total,
+        },
+        workspace_id: access.workspace.id,
+      }),
+    ]);
+
+    return applyRateLimitHeaders(NextResponse.json(response), rateLimit);
+  } catch (error) {
+    logRouteError("Workspace search failed.", error, {
+      requestId,
+      userId: user.id,
+      workspaceId: access.workspace.id,
+      workspaceSlug,
+    });
+
+    return jsonError("Workspace search is temporarily unavailable.", 503, {
+      requestId,
+    });
+  }
 }

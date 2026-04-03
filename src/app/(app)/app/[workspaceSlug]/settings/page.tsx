@@ -1,3 +1,4 @@
+import { WorkspaceJobStatusSync } from "@/components/realtime/workspace-job-status-sync";
 import { MemberRemoveForm } from "@/components/workspaces/member-remove-form";
 import { MemberRoleForm } from "@/components/workspaces/member-role-form";
 import { RoleBadge } from "@/components/workspaces/role-badge";
@@ -69,6 +70,10 @@ export default async function WorkspaceSettingsPage({
 
   return (
     <div className="grid gap-6">
+      <WorkspaceJobStatusSync
+        active={usageOverview.activeJobsCount > 0}
+        workspaceId={access.workspace.id}
+      />
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <MetricCard
           icon={<SettingsIcon />}

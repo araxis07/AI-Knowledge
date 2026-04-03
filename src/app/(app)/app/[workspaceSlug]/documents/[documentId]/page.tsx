@@ -35,6 +35,7 @@ const detailNotices: Record<string, string> = {
   "job-error": "The current ingestion job state could not be loaded.",
   queued: "A new processing job was queued for this document.",
   "queue-error": "The reprocess job could not be queued right now.",
+  "rate-limited": "Too many reprocess requests were sent for this workspace. Wait a moment and try again.",
 };
 
 function formatTimestamp(value: string | null) {
@@ -66,7 +67,11 @@ export default async function DocumentDetailPage({
 
   return (
     <div className="space-y-6">
-      <DocumentIngestionAutoRefresh active={isDocumentJobActive(document.latestJob)} />
+      <DocumentIngestionAutoRefresh
+        active={isDocumentJobActive(document.latestJob)}
+        documentId={document.id}
+        workspaceId={access.workspace.id}
+      />
       <PageHeader
         actions={
           <div className="flex flex-wrap gap-3">

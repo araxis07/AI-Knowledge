@@ -1,4 +1,5 @@
 import { ActivityFeed } from "@/components/activity/activity-feed";
+import { WorkspaceJobStatusSync } from "@/components/realtime/workspace-job-status-sync";
 import { OperationalStatusPanel } from "@/components/activity/operational-status-panel";
 import { RecentSearchList } from "@/components/activity/recent-search-list";
 import { Badge } from "@/components/ui/badge";
@@ -33,6 +34,10 @@ export default async function WorkspaceActivityPage({ params }: ActivityPageProp
 
   return (
     <div className="grid gap-6">
+      <WorkspaceJobStatusSync
+        active={usageOverview.activeJobsCount > 0}
+        workspaceId={access.workspace.id}
+      />
       <PageHeader
         actions={
           <div className="flex flex-wrap gap-2">

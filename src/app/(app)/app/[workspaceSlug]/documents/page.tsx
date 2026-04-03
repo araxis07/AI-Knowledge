@@ -46,6 +46,7 @@ const documentNotices: Record<string, string> = {
   deleted: "The document was deleted from storage and removed from the library.",
   forbidden: "Your role does not allow document mutations in this workspace.",
   "not-found": "That document no longer exists in this workspace.",
+  "rate-limited": "Too many upload or reprocess actions were requested. Wait a moment and try again.",
 };
 
 function formatTimestamp(value: string) {
@@ -79,7 +80,10 @@ export default async function WorkspaceDocumentsPage({
 
   return (
     <div className="space-y-6">
-      <DocumentIngestionAutoRefresh active={documents.some((document) => isDocumentJobActive(document.latestJob))} />
+      <DocumentIngestionAutoRefresh
+        active={documents.some((document) => isDocumentJobActive(document.latestJob))}
+        workspaceId={access.workspace.id}
+      />
       <PageHeader
         actions={
           canManageDocuments ? (

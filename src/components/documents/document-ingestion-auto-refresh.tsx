@@ -1,30 +1,24 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { WorkspaceJobStatusSync } from "@/components/realtime/workspace-job-status-sync";
 
 export function DocumentIngestionAutoRefresh({
   active,
+  documentId,
   intervalMs = 4000,
+  workspaceId,
 }: {
   active: boolean;
+  documentId?: string;
   intervalMs?: number;
+  workspaceId: string;
 }) {
-  const router = useRouter();
-
-  useEffect(() => {
-    if (!active) {
-      return;
-    }
-
-    const timer = window.setInterval(() => {
-      router.refresh();
-    }, intervalMs);
-
-    return () => {
-      window.clearInterval(timer);
-    };
-  }, [active, intervalMs, router]);
-
-  return null;
+  return (
+    <WorkspaceJobStatusSync
+      active={active}
+      fallbackIntervalMs={intervalMs}
+      workspaceId={workspaceId}
+      {...(documentId ? { documentId } : {})}
+    />
+  );
 }

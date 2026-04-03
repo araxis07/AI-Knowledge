@@ -9,6 +9,7 @@ import {
   insertDocumentIngestionJob,
 } from "@/lib/documents";
 import { requireAuthenticatedUser } from "@/lib/auth";
+import { logRouteError } from "@/lib/errors/api";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { asRoute } from "@/lib/utils/as-route";
 import { formDataString } from "@/lib/action-utils";
@@ -18,6 +19,7 @@ import {
   getIngestionWorkerAvailability,
   runQueuedIngestionJob,
 } from "@/server/ingestion/run-job";
+import { enforceRateLimit, RATE_LIMIT_POLICIES } from "@/server/rate-limit";
 
 function documentRedirectPath(workspaceSlug: string, documentId?: string) {
   if (documentId) {
@@ -163,6 +165,16 @@ export async function reprocessDocumentAction(formData: FormData) {
     redirect(asRoute(`${nextPath}?documents=archived-readonly`));
   }
 
+  const rateLimit = await enforceRateLimit({
+    identifier: context.user.id,
+    policy: RATE_LIMIT_POLICIES.documentReprocess,
+    workspaceId: context.parsed.workspaceId,
+  });
+
+  if (!rateLimit.allowed) {
+    redirect(asRoute(`${nextPath}?documents=rate-limited`));
+  }
+
   const { data: activeJob, error: activeJobError } = await context.supabase
     .from("ingestion_jobs")
     .select("id")
@@ -213,9 +225,9 @@ export async function reprocessDocumentAction(formData: FormData) {
       try {
         await runQueuedIngestionJob(queuedJob.id);
       } catch (error) {
-        console.error("Failed to execute queued reprocessing job.", {
-          error,
+        logRouteError("Failed to execute queued reprocessing job.", error, {
           jobId: queuedJob.id,
+          workspaceId: context.parsed.workspaceId,
         });
       }
     });

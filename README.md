@@ -2,7 +2,7 @@
 
 Production-oriented full-stack foundation for an AI knowledge base and semantic document search platform built with Next.js App Router, TypeScript, Tailwind CSS, and a Supabase-first backend architecture.
 
-This repository currently contains the product shell, real Supabase Auth, workspace management, document library uploads, an asynchronous ingestion foundation, hybrid workspace search, grounded AI Q&A with visible citations, and admin/activity foundations backed by pgvector and PostgreSQL full-text search.
+This repository currently contains the product shell, real Supabase Auth, workspace management, document library uploads, an asynchronous ingestion foundation, hybrid workspace search, grounded AI Q&A with visible citations, admin/activity foundations, and production-oriented hardening backed by pgvector and PostgreSQL full-text search.
 
 ## Stack
 
@@ -44,7 +44,11 @@ This repository currently contains the product shell, real Supabase Auth, worksp
 - database-backed workspace activity feed and recent search history
 - admin operational panels for usage overview and ingestion status
 - member role updates and member removal with role-aware guards
-- health endpoints
+- realtime workspace job refresh for document and operational surfaces
+- presence foundation for collaborative AI workspace surfaces
+- database-backed server-side rate limiting for search, AI Q&A, and document ingestion controls
+- health, readiness, and system status endpoints with queue visibility
+- redacted server-side error logging for safer operational debugging
 - environment template
 - GitHub Actions CI foundation
 
@@ -105,6 +109,8 @@ The ingestion worker runs after the request completes by using Next.js server-si
 
 Grounded AI answers use the same `OPENAI_API_KEY`, plus `AI_CHAT_PROVIDER` and `AI_OPENAI_CHAT_MODEL`, and they always retrieve workspace chunks before the model is called.
 
+Rate limiting, queue health, and ingestion readiness stay server-side only. The `/api/health/live`, `/api/health/ready`, and `/api/health/status` endpoints expose operational status without returning raw secrets, and server-side error logs redact known credential patterns before writing to stdout.
+
 ## Project Structure
 
 ```text
@@ -120,10 +126,13 @@ src/
     conversations/
     documents/
     layout/
+    realtime/
     search/
     ui/
     workspaces/
   lib/
+    errors/
+    security/
     types/
     supabase/
     utils/
@@ -132,6 +141,8 @@ src/
     ai/
     conversations/
     ingestion/
+    operations/
+    rate-limit.ts
     search/
 supabase/
   migrations/
@@ -149,6 +160,6 @@ GitHub Actions runs:
 ## Next Phases
 
 1. Member invitations and richer workspace administration
-2. Search history, saved searches, and analytics
-3. E2E coverage for document, ingestion, search, and grounded Q&A flows
+2. Saved searches, analytics, and usage quotas
+3. E2E coverage for document, ingestion, search, grounded Q&A, and operational status flows
 4. Optional async worker isolation outside the Next.js runtime

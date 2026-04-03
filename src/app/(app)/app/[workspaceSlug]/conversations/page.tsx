@@ -1,6 +1,7 @@
 import { ConversationComposer } from "@/components/conversations/conversation-composer";
 import { ConversationList } from "@/components/conversations/conversation-list";
 import { ConversationThreadMessage } from "@/components/conversations/conversation-thread-message";
+import { WorkspacePresenceBadge } from "@/components/realtime/workspace-presence-badge";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -46,9 +47,15 @@ export default async function WorkspaceConversationsPage({
     <div className="space-y-6">
       <PageHeader
         actions={
-          <Badge className="border-teal-200 bg-teal-50 text-teal-700">
-            Workspace: {access.workspace.name}
-          </Badge>
+          <div className="flex flex-wrap gap-2">
+            <Badge className="border-teal-200 bg-teal-50 text-teal-700">
+              Workspace: {access.workspace.name}
+            </Badge>
+            <WorkspacePresenceBadge
+              userId={user.id}
+              workspaceId={access.workspace.id}
+            />
+          </div>
         }
         description="Ask grounded questions inside this workspace, reopen previous threads, and inspect the exact supporting citations under every answer."
         eyebrow="AI Q&A"

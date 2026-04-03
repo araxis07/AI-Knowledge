@@ -15,13 +15,20 @@ import {
   newDocumentId,
   validateDocumentFile,
 } from "@/lib/documents";
+import { createRequestId, jsonError, logRouteError } from "@/lib/errors/api";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import { findWorkspaceAccessBySlug, hasMinimumWorkspaceRole } from "@/lib/workspaces";
 import { uploadDocumentSchema } from "@/lib/validation/documents";
+import { findWorkspaceAccessBySlug, hasMinimumWorkspaceRole } from "@/lib/workspaces";
 import {
   getIngestionWorkerAvailability,
   runQueuedIngestionJob,
 } from "@/server/ingestion/run-job";
+import {
+  applyRateLimitHeaders,
+  createRateLimitErrorResponse,
+  enforceRateLimit,
+  RATE_LIMIT_POLICIES,
+} from "@/server/rate-limit";
 
 type UploadRouteContext = {
   params: Promise<{
@@ -29,18 +36,8 @@ type UploadRouteContext = {
   }>;
 };
 
-function jsonError(message: string, status: number) {
-  return NextResponse.json(
-    {
-      message,
-    },
-    {
-      status,
-    },
-  );
-}
-
 export async function POST(request: Request, { params }: UploadRouteContext) {
+  const requestId = createRequestId();
   const { workspaceSlug } = await params;
   const supabase = await createServerSupabaseClient();
   const {
@@ -62,178 +59,236 @@ export async function POST(request: Request, { params }: UploadRouteContext) {
     return jsonError("Your role cannot upload documents in this workspace.", 403);
   }
 
-  const formData = await request.formData();
-  const file = formData.get("file");
-
-  if (!(file instanceof File)) {
-    return jsonError("Choose a supported file before uploading.", 400);
-  }
-
-  if (file.size === 0) {
-    return jsonError("The selected file is empty.", 400);
-  }
-
-  if (file.size > maxDocumentUploadSizeBytes) {
-    return jsonError("Files must be 25 MB or smaller for this phase.", 400);
-  }
-
-  const supportedFile = validateDocumentFile(file.name, file.type);
-
-  if (!supportedFile) {
-    return jsonError("Only PDF, Markdown, and plain-text files are supported right now.", 400);
-  }
-
-  const parsed = uploadDocumentSchema.safeParse({
-    description: formData.get("description"),
-    title: formData.get("title"),
+  const uploadRateLimit = await enforceRateLimit({
+    identifier: user.id,
+    policy: RATE_LIMIT_POLICIES.documentUpload,
+    workspaceId: access.workspace.id,
   });
 
-  if (!parsed.success) {
-    return jsonError(parsed.error.flatten().formErrors[0] ?? "The document details are invalid.", 400);
-  }
-
-  const buffer = Buffer.from(await file.arrayBuffer());
-  const checksumSha256 = computeSha256Checksum(buffer);
-  const existingDocument = await findExistingWorkspaceDocumentByChecksum(
-    access.workspace.id,
-    checksumSha256,
-  );
-
-  if (existingDocument) {
-    return NextResponse.json(
-      {
-        documentId: existingDocument.id,
-        message: `“${existingDocument.title}” is already stored in this workspace.`,
-      },
-      {
-        status: 409,
-      },
+  if (!uploadRateLimit.allowed) {
+    return createRateLimitErrorResponse(
+      uploadRateLimit,
+      "Too many document uploads were requested in this workspace. Wait a moment and try again.",
     );
   }
 
-  const documentId = newDocumentId();
-  const workerAvailability = getIngestionWorkerAvailability();
-  const queuedProgressMessage = workerAvailability.ready ? null : workerAvailability.message;
-  const storagePath = createDocumentStoragePath(
-    access.workspace.id,
-    documentId,
-    supportedFile.extension,
-  );
-  const title = parsed.data.title || deriveDocumentTitle(file.name);
-  const description = parsed.data.description || null;
-  const contentType = file.type || supportedFile.contentType;
-  const { error: uploadError } = await supabase.storage
-    .from(DOCUMENT_BUCKET)
-    .upload(storagePath, buffer, {
-      contentType,
-      upsert: false,
+  try {
+    const formData = await request.formData();
+    const file = formData.get("file");
+
+    if (!(file instanceof File)) {
+      return jsonError("Choose a supported file before uploading.", 400);
+    }
+
+    if (file.size === 0) {
+      return jsonError("The selected file is empty.", 400);
+    }
+
+    if (file.size > maxDocumentUploadSizeBytes) {
+      return jsonError("Files must be 25 MB or smaller for this phase.", 400);
+    }
+
+    const supportedFile = validateDocumentFile(file.name, file.type);
+
+    if (!supportedFile) {
+      return jsonError("Only PDF, Markdown, and plain-text files are supported right now.", 400);
+    }
+
+    const parsed = uploadDocumentSchema.safeParse({
+      description: formData.get("description"),
+      title: formData.get("title"),
     });
 
-  if (uploadError) {
-    return jsonError(`Unable to upload this file: ${uploadError.message}`, 500);
-  }
+    if (!parsed.success) {
+      return jsonError(
+        parsed.error.flatten().formErrors[0] ?? "The document details are invalid.",
+        400,
+      );
+    }
 
-  const { data: document, error: documentError } = await supabase
-    .from("documents")
-    .insert({
-      checksum_sha256: checksumSha256,
-      description,
-      file_extension: supportedFile.extension,
-      language_code: "en",
-      metadata: {
-        originalFileName: file.name,
-        uploadSource: "app",
-      },
-      mime_type: contentType,
-      size_bytes: file.size,
-      source_type: "upload",
-      status: "queued",
-      storage_bucket: DOCUMENT_BUCKET,
-      storage_path: storagePath,
-      title,
-      uploaded_by: user.id,
-      workspace_id: access.workspace.id,
-    })
-    .select("id, title")
-    .single();
-
-  if (documentError || !document) {
-    await supabase.storage.from(DOCUMENT_BUCKET).remove([storagePath]);
-    return jsonError(`Unable to save document metadata: ${documentError?.message ?? "Unknown error"}`, 500);
-  }
-
-  const { data: queuedJob, error: queueError } = await insertDocumentIngestionJob({
-    documentId: document.id,
-    jobKind: "extract",
-    payload: {
+    const buffer = Buffer.from(await file.arrayBuffer());
+    const checksumSha256 = computeSha256Checksum(buffer);
+    const existingDocument = await findExistingWorkspaceDocumentByChecksum(
+      access.workspace.id,
       checksumSha256,
-      contentType,
-      fileName: file.name,
-      sizeBytes: file.size,
-      storagePath,
-      title,
-    },
-    ...(queuedProgressMessage ? { progressMessage: queuedProgressMessage } : {}),
-    requestedBy: user.id,
-    workspaceId: access.workspace.id,
-  });
+    );
 
-  if (queueError) {
-    await supabase
+    if (existingDocument) {
+      return applyRateLimitHeaders(
+        NextResponse.json(
+          {
+            documentId: existingDocument.id,
+            message: `“${existingDocument.title}” is already stored in this workspace.`,
+          },
+          {
+            status: 409,
+          },
+        ),
+        uploadRateLimit,
+      );
+    }
+
+    const documentId = newDocumentId();
+    const workerAvailability = getIngestionWorkerAvailability();
+    const queuedProgressMessage = workerAvailability.ready ? null : workerAvailability.message;
+    const storagePath = createDocumentStoragePath(
+      access.workspace.id,
+      documentId,
+      supportedFile.extension,
+    );
+    const title = parsed.data.title || deriveDocumentTitle(file.name);
+    const description = parsed.data.description || null;
+    const contentType = file.type || supportedFile.contentType;
+    const { error: uploadError } = await supabase.storage
+      .from(DOCUMENT_BUCKET)
+      .upload(storagePath, buffer, {
+        contentType,
+        upsert: false,
+      });
+
+    if (uploadError) {
+      logRouteError("Document upload storage write failed.", uploadError, {
+        requestId,
+        userId: user.id,
+        workspaceId: access.workspace.id,
+        workspaceSlug,
+      });
+
+      return jsonError(
+        "We could not store this file right now. Try again in a moment.",
+        500,
+        { requestId },
+      );
+    }
+
+    const { data: document, error: documentError } = await supabase
       .from("documents")
-      .update({
-        status: "uploaded",
+      .insert({
+        checksum_sha256: checksumSha256,
+        description,
+        file_extension: supportedFile.extension,
+        language_code: "en",
+        metadata: {
+          originalFileName: file.name,
+          uploadSource: "app",
+        },
+        mime_type: contentType,
+        size_bytes: file.size,
+        source_type: "upload",
+        status: "queued",
+        storage_bucket: DOCUMENT_BUCKET,
+        storage_path: storagePath,
+        title,
+        uploaded_by: user.id,
+        workspace_id: access.workspace.id,
       })
-      .eq("workspace_id", access.workspace.id)
-      .eq("id", document.id);
-  }
+      .select("id, title")
+      .single();
 
-  const backgroundProcessingStarted = Boolean(
-    !queueError && queuedJob && workerAvailability.ready,
-  );
+    if (documentError || !document) {
+      await supabase.storage.from(DOCUMENT_BUCKET).remove([storagePath]);
 
-  if (backgroundProcessingStarted && queuedJob) {
-    after(async () => {
-      try {
-        await runQueuedIngestionJob(queuedJob.id);
-      } catch (error) {
-        console.error("Failed to execute queued ingestion job.", {
-          error,
-          jobId: queuedJob.id,
-        });
-      }
+      logRouteError("Document upload metadata write failed.", documentError, {
+        requestId,
+        storagePath,
+        userId: user.id,
+        workspaceId: access.workspace.id,
+      });
+
+      return jsonError(
+        "The uploaded file could not be registered in the library right now.",
+        500,
+        { requestId },
+      );
+    }
+
+    const { data: queuedJob, error: queueError } = await insertDocumentIngestionJob({
+      documentId: document.id,
+      jobKind: "extract",
+      payload: {
+        checksumSha256,
+        contentType,
+        fileName: file.name,
+        sizeBytes: file.size,
+        storagePath,
+        title,
+      },
+      ...(queuedProgressMessage ? { progressMessage: queuedProgressMessage } : {}),
+      requestedBy: user.id,
+      workspaceId: access.workspace.id,
+    });
+
+    if (queueError) {
+      await supabase
+        .from("documents")
+        .update({
+          status: "uploaded",
+        })
+        .eq("workspace_id", access.workspace.id)
+        .eq("id", document.id);
+    }
+
+    const backgroundProcessingStarted = Boolean(
+      !queueError && queuedJob && workerAvailability.ready,
+    );
+
+    if (backgroundProcessingStarted && queuedJob) {
+      after(async () => {
+        try {
+          await runQueuedIngestionJob(queuedJob.id);
+        } catch (error) {
+          logRouteError("Failed to execute queued ingestion job.", error, {
+            jobId: queuedJob.id,
+            workspaceId: access.workspace.id,
+          });
+        }
+      });
+    }
+
+    await insertDocumentActivityLog({
+      action: "document.uploaded",
+      actorUserId: user.id,
+      entityId: document.id,
+      payload: {
+        dispatchStatus: backgroundProcessingStarted ? "started" : "queued",
+        fileName: file.name,
+        jobQueued: !queueError,
+        sizeBytes: file.size,
+        title,
+      },
+      workspaceId: access.workspace.id,
+    });
+
+    revalidatePath(`/app/${access.workspace.slug}`);
+    revalidatePath(`/app/${access.workspace.slug}/documents`);
+
+    return applyRateLimitHeaders(
+      NextResponse.json(
+        {
+          documentId: document.id,
+          message: queueError
+            ? "The document uploaded successfully, but automatic processing was not queued yet."
+            : backgroundProcessingStarted
+              ? "The document uploaded successfully and processing has started."
+              : "The document uploaded successfully and is queued for processing.",
+          title: document.title,
+        },
+        {
+          status: 201,
+        },
+      ),
+      uploadRateLimit,
+    );
+  } catch (error) {
+    logRouteError("Document upload request failed.", error, {
+      requestId,
+      userId: user.id,
+      workspaceId: access.workspace.id,
+      workspaceSlug,
+    });
+
+    return jsonError("We could not process this upload request right now.", 500, {
+      requestId,
     });
   }
-
-  await insertDocumentActivityLog({
-    action: "document.uploaded",
-    actorUserId: user.id,
-    entityId: document.id,
-    payload: {
-      dispatchStatus: backgroundProcessingStarted ? "started" : "queued",
-      fileName: file.name,
-      jobQueued: !queueError,
-      sizeBytes: file.size,
-      title,
-    },
-    workspaceId: access.workspace.id,
-  });
-
-  revalidatePath(`/app/${access.workspace.slug}`);
-  revalidatePath(`/app/${access.workspace.slug}/documents`);
-
-  return NextResponse.json(
-    {
-      documentId: document.id,
-      message: queueError
-        ? "The document uploaded successfully, but automatic processing was not queued yet."
-        : backgroundProcessingStarted
-          ? "The document uploaded successfully and processing has started."
-        : "The document uploaded successfully and is queued for processing.",
-      title: document.title,
-    },
-    {
-      status: 201,
-    },
-  );
 }

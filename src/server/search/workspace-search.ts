@@ -1,5 +1,6 @@
 import "server-only";
 
+import { logRouteError } from "@/lib/errors/api";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import type {
   WorkspaceSearchDocumentOption,
@@ -162,7 +163,7 @@ export async function searchWorkspace(
           ? "Semantic ranking is unavailable right now, so these results are using keyword search only."
           : "Semantic search is unavailable right now, so the query was routed through keyword search instead.";
 
-      console.error("Unable to build the semantic search query embedding.", {
+      logRouteError("Unable to build the semantic search query embedding.", error, {
         error: normalizeSearchErrorMessage(error),
         workspaceId,
       });
