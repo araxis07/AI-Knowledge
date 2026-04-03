@@ -21,7 +21,10 @@ export function SearchResultCard({
   workspaceSlug: string;
 }) {
   return (
-    <Card className="border-[var(--app-border)] bg-white/88 p-5 transition hover:-translate-y-0.5 hover:border-[var(--app-border-strong)]">
+    <Card
+      className="border-[var(--app-border)] bg-white/88 p-5 transition hover:-translate-y-0.5 hover:border-[var(--app-border-strong)]"
+      data-testid="workspace-search-result-card"
+    >
       <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-3">

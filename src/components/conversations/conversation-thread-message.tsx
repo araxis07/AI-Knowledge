@@ -81,6 +81,7 @@ export function ConversationThreadMessage({
               {message.citations.map((citation) => (
                 <div
                   className="rounded-[1.35rem] border border-[var(--app-border)] bg-[var(--app-panel-muted)] p-4"
+                  data-testid="conversation-citation-card"
                   key={citation.id}
                 >
                   <div className="flex flex-wrap items-center gap-2">

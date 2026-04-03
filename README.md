@@ -1,8 +1,30 @@
 # AI Knowledge Base
 
-Production-oriented full-stack foundation for an AI knowledge base and semantic document search platform built with Next.js App Router, TypeScript, Tailwind CSS, and a Supabase-first backend architecture.
+Portfolio-grade full-stack knowledge base for workspace-scoped document search and grounded AI answers. The app uses Next.js App Router on the frontend and Supabase for auth, Postgres, Storage, Realtime, and pgvector-backed retrieval.
 
-This repository currently contains the product shell, real Supabase Auth, workspace management, document library uploads, an asynchronous ingestion foundation, hybrid workspace search, grounded AI Q&A with visible citations, admin/activity foundations, and production-oriented hardening backed by pgvector and PostgreSQL full-text search.
+## What This Project Includes
+
+- Real Supabase Auth with sign up, sign in, sign out, and protected App Router routes
+- Workspace creation, switching, settings, and role-aware guards for `owner`, `admin`, `editor`, and `viewer`
+- Secure document uploads into a private workspace bucket
+- Database-backed document library, detail pages, archive/delete/reprocess controls, and ingestion job visibility
+- Async ingestion foundation for PDF, Markdown, and plain text extraction, normalization, chunking, and vector persistence
+- Hybrid search with PostgreSQL full-text search plus pgvector-based retrieval
+- Grounded AI Q&A that only answers from retrieved workspace context and renders visible citations
+- Conversation history foundation, activity feed, operational status panels, and health endpoints
+- Realtime ingestion status refresh, server-side rate limiting, and secret redaction in logs
+- Playwright coverage for critical flows, plus GitHub Actions CI foundations
+
+## Provider-Dependent Features
+
+These flows are implemented but depend on external credentials:
+
+- Embedding generation during ingestion needs `OPENAI_API_KEY`
+- Semantic or hybrid retrieval falls back to keyword-only search if embeddings are unavailable
+- Grounded AI answers with fresh model output need `OPENAI_API_KEY`
+- Provider-backed Playwright tests are optional and disabled by default
+
+Core workspace, auth, document upload, keyword search, member management, and operational surfaces do not require browser-side secrets.
 
 ## Stack
 
@@ -10,61 +32,36 @@ This repository currently contains the product shell, real Supabase Auth, worksp
 - React 19.2.4
 - TypeScript 5.9.3 in strict mode
 - Tailwind CSS 4.2.2
-- ESLint 9 with `eslint-config-next`
+- Supabase Auth, Postgres, Storage, Realtime, and pgvector
 - Zod 4.3.6
+- React Hook Form 7.72.0
+- Playwright 1.59.1
+- ESLint 9 with `eslint-config-next`
 
-## Included Now
+## Repository Structure
 
-- App Router scaffold
-- strict TypeScript configuration
-- Tailwind CSS v4 setup
-- flat ESLint configuration
-- production-leaning base app shell
-- Supabase SSR/auth foundation for App Router
-- real sign in, sign up, and sign out flows with Supabase Auth
-- protected `/app` routes with server-side guards
-- profile sync for authenticated users
-- workspace creation, switching, and settings foundation
-- role-aware workspace access for `owner`, `admin`, `editor`, and `viewer`
-- initial SQL migrations with RLS, pgvector, and full-text search support
-- real document uploads into a private Supabase Storage bucket
-- document library list and detail pages backed by Postgres
-- asynchronous ingestion jobs with progress tracking
-- text extraction for PDF, Markdown, and plain-text files
-- normalized chunk generation with overlap
-- swappable embedding adapter foundation with an OpenAI implementation
-- chunk and vector persistence in `document_chunks`
-- workspace search UI with hybrid, semantic, and keyword retrieval modes
-- pgvector similarity search fused with PostgreSQL full-text ranking
-- document, tag, and date filters for workspace search
-- grounded workspace Q&A that refuses to answer without retrieved context
-- visible citation cards with cited document names and chunk previews
-- conversation history foundation for saved grounded threads
-- swappable chat provider adapter foundation with an OpenAI Responses API implementation
-- database-backed workspace activity feed and recent search history
-- admin operational panels for usage overview and ingestion status
-- member role updates and member removal with role-aware guards
-- realtime workspace job refresh for document and operational surfaces
-- presence foundation for collaborative AI workspace surfaces
-- database-backed server-side rate limiting for search, AI Q&A, and document ingestion controls
-- health, readiness, and system status endpoints with queue visibility
-- redacted server-side error logging for safer operational debugging
-- environment template
-- GitHub Actions CI foundation
+```text
+src/
+  app/                     # App Router pages, route handlers, server actions
+  components/              # UI, layout, search, chat, documents, workspaces
+  lib/                     # shared validation, env, Supabase helpers, utilities
+  server/                  # server-only AI, ingestion, search, ops, and rate limit logic
+supabase/
+  migrations/              # SQL schema, RLS, search, storage, and hardening migrations
+e2e/                       # Playwright helpers, fixtures, and specs
+docs/
+  production-checklist.md
+```
 
-## Not Included Yet
+## Local Development
 
-- member invitation workflows
-- extraction workers outside the Next.js runtime
-- richer conversation management controls beyond the initial thread foundation
-- advanced ownership transfer and workspace deletion flows
-
-## Requirements
+### Requirements
 
 - Node.js `>=24.14.1`
 - npm `>=11`
+- A Supabase project with the repository migrations applied
 
-## Getting Started
+### Setup
 
 ```bash
 npm install
@@ -74,26 +71,30 @@ npm run dev
 
 Open `http://localhost:3000`.
 
-## Available Scripts
-
-```bash
-npm run dev
-npm run lint
-npm run typecheck
-npm run build
-npm run check
-```
-
 ## Environment
 
-The scaffold keeps environment requirements minimal for now:
+The public-safe template lives in [`./.env.example`](./.env.example). The important groups are:
+
+### App
 
 ```bash
 NEXT_PUBLIC_APP_URL=http://localhost:3000
+```
+
+### Supabase
+
+```bash
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
+```
+
+`NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` is the preferred browser key. `NEXT_PUBLIC_SUPABASE_ANON_KEY` remains as a compatibility fallback. `SUPABASE_SERVICE_ROLE_KEY` must stay server-side only.
+
+### AI Providers
+
+```bash
 AI_CHAT_PROVIDER=openai
 AI_EMBEDDING_PROVIDER=openai
 AI_OPENAI_BASE_URL=https://api.openai.com/v1
@@ -103,63 +104,64 @@ AI_OPENAI_EMBEDDING_DIMENSIONS=1536
 OPENAI_API_KEY=
 ```
 
-`NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` is the preferred public key. `NEXT_PUBLIC_SUPABASE_ANON_KEY` is kept as a compatibility fallback during Supabase's key transition. `SUPABASE_SERVICE_ROLE_KEY` is only for trusted server-side workflows and must never be exposed to the browser.
+### Playwright
 
-The ingestion worker runs after the request completes by using Next.js server-side background callbacks. It needs `SUPABASE_SERVICE_ROLE_KEY` to read storage and write chunks, and it needs `OPENAI_API_KEY` to generate embeddings with the default provider.
-
-Grounded AI answers use the same `OPENAI_API_KEY`, plus `AI_CHAT_PROVIDER` and `AI_OPENAI_CHAT_MODEL`, and they always retrieve workspace chunks before the model is called.
-
-Rate limiting, queue health, and ingestion readiness stay server-side only. The `/api/health/live`, `/api/health/ready`, and `/api/health/status` endpoints expose operational status without returning raw secrets, and server-side error logs redact known credential patterns before writing to stdout.
-
-## Project Structure
-
-```text
-src/
-  app/
-    (public)/
-    (app)/app/
-    actions/
-    api/health/
-    auth/callback/
-  components/
-    auth/
-    conversations/
-    documents/
-    layout/
-    realtime/
-    search/
-    ui/
-    workspaces/
-  lib/
-    errors/
-    security/
-    types/
-    supabase/
-    utils/
-    validation/
-  server/
-    ai/
-    conversations/
-    ingestion/
-    operations/
-    rate-limit.ts
-    search/
-supabase/
-  migrations/
+```bash
+PLAYWRIGHT_BASE_URL=http://127.0.0.1:3000
+PLAYWRIGHT_ENABLE_PROVIDER_TESTS=false
 ```
+
+## Scripts
+
+```bash
+npm run dev
+npm run lint
+npm run typecheck
+npm run build
+npm run check
+npm run test:e2e
+npm run test:e2e:core
+npm run test:e2e:provider
+```
+
+## Testing
+
+### Critical Playwright Flows
+
+- Auth redirect, sign-in, sign-out, and public sign-up smoke coverage
+- Workspace creation and workspace switching
+- Document upload plus ingestion/job visibility
+- Keyword search with result snippets and filters
+- Owner member-management controls
+- Provider-backed grounded Q&A with citations
+
+### How The Suite Is Split
+
+- `npm run test:e2e:core`
+  Runs flows that do not require live model output
+- `npm run test:e2e:provider`
+  Runs provider-backed AI tests tagged with `@provider`
+
+Provider tests only run when `PLAYWRIGHT_ENABLE_PROVIDER_TESTS=true` and `OPENAI_API_KEY` is present.
 
 ## CI
 
-GitHub Actions runs:
+The default GitHub Actions workflow always runs:
 
-- install with `npm ci`
+- `npm ci`
 - `npm run lint`
 - `npm run typecheck`
 - `npm run build`
 
-## Next Phases
+An optional E2E job is included but only runs when the repository variable `E2E_ENABLED=true` is set. It expects the required Supabase secrets to be configured in GitHub. Provider-backed E2E is gated separately by `E2E_PROVIDER_ENABLED=true`.
 
-1. Member invitations and richer workspace administration
-2. Saved searches, analytics, and usage quotas
-3. E2E coverage for document, ingestion, search, grounded Q&A, and operational status flows
-4. Optional async worker isolation outside the Next.js runtime
+## Production Readiness
+
+See [`docs/production-checklist.md`](./docs/production-checklist.md) for the deploy checklist covering migrations, secrets, health checks, provider setup, and launch review.
+
+## Current Gaps
+
+- Member invitation workflows
+- Ownership transfer and workspace deletion flows
+- Dedicated external workers beyond the current Next.js async job foundation
+- Richer analytics and quota management

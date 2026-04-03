@@ -101,7 +101,9 @@ export default async function DocumentDetailPage({
         eyebrow="Document detail"
         kicker={
           <>
-            <DocumentStatusBadge status={document.displayStatus} />
+            <span data-testid="document-status-indicator">
+              <DocumentStatusBadge status={document.displayStatus} />
+            </span>
             <Badge>{getDocumentKindLabel(document.kind)}</Badge>
             <Badge>{formatBytes(document.sizeBytes)}</Badge>
           </>

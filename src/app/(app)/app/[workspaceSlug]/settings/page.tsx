@@ -148,6 +148,7 @@ export default async function WorkspaceSettingsPage({
                 <div
                   key={member.id}
                   className="rounded-[1.5rem] border border-[var(--app-border)] bg-white/84 p-5"
+                  data-testid={`workspace-member-row-${member.userId}`}
                 >
                   <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                     <div>

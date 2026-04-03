@@ -26,6 +26,8 @@ pnpm-debug.log*
 # coverage and reports
 coverage/
 playwright-report/
+blob-report/
+test-results/
 
 # system
 .DS_Store

@@ -127,6 +127,7 @@ export function DocumentUploadPanel({ workspaceSlug }: { workspaceSlug: string }
           </div>
           <Input
             accept={documentAcceptAttribute}
+            aria-label="Document file"
             id="document-file"
             name="file"
             onChange={(event) => {
